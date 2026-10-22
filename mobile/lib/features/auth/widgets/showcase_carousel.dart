@@ -1,18 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/showcase_slide.dart';
 
 class ShowcaseCarousel extends StatefulWidget {
   final List<ShowcaseSlide> slides;
   final double height;
+  final bool showCaptions;
 
   const ShowcaseCarousel({
     super.key,
     required this.slides,
-    this.height = 360,
+    this.height = 380,
+    this.showCaptions = true,
   });
 
   @override
@@ -51,6 +52,41 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
     super.dispose();
   }
 
+  Widget _buildSlideImage(ShowcaseSlide slide) {
+    if (slide.isAsset || slide.imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        slide.imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+      );
+    }
+    return Image.network(
+      slide.imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: AppColors.surfaceDark,
+          child: const Center(
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accentIndigo),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppColors.primaryGradient,
+      ),
+      child: const Center(
+        child: Icon(Icons.school, size: 70, color: Colors.white24),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.slides.isEmpty) {
@@ -77,27 +113,7 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                   // Photo with fallback background
                   Container(
                     color: AppColors.surfaceDark,
-                    child: Image.network(
-                      slide.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        decoration: const BoxDecoration(
-                          gradient: AppColors.primaryGradient,
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.school, size: 70, color: Colors.white24),
-                        ),
-                      ),
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: AppColors.surfaceDark,
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accentIndigo),
-                          ),
-                        );
-                      },
-                    ),
+                    child: _buildSlideImage(slide),
                   ),
 
                   // Multi-layer Gradient Overlay for readability
@@ -107,7 +123,7 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppColors.bgDark.withOpacity(0.3),
+                          AppColors.bgDark.withOpacity(0.35),
                           Colors.transparent,
                           AppColors.bgDark.withOpacity(0.85),
                           AppColors.bgDark,
@@ -117,89 +133,90 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                     ),
                   ),
 
-                  // Slide Caption & Tags
-                  Positioned(
-                    bottom: 36,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Tag Pill & Badge
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.accentIndigo.withOpacity(0.85),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.white24),
-                              ),
-                              child: Text(
-                                slide.tag.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            if (slide.badge.isNotEmpty)
+                  // Slide Caption & Tags (if enabled)
+                  if (widget.showCaptions)
+                    Positioned(
+                      bottom: 36,
+                      left: 20,
+                      right: 20,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Tag Pill & Badge
+                          Row(
+                            children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.black45,
+                                  color: AppColors.accentIndigo.withOpacity(0.85),
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.white12),
+                                  border: Border.all(color: Colors.white24),
                                 ),
                                 child: Text(
-                                  slide.badge,
+                                  slide.tag.toUpperCase(),
                                   style: const TextStyle(
-                                    color: AppColors.accentGold,
+                                    color: Colors.white,
                                     fontSize: 10,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.8,
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Title
-                        Text(
-                          slide.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            shadows: [
-                              Shadow(color: Colors.black87, blurRadius: 10),
+                              const SizedBox(width: 8),
+                              if (slide.badge.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white12),
+                                  ),
+                                  child: Text(
+                                    slide.badge,
+                                    style: const TextStyle(
+                                      color: AppColors.accentGold,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
+                          const SizedBox(height: 8),
 
-                        // Subtitle
-                        Text(
-                          slide.subtitle,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 12,
-                            shadows: const [
-                              Shadow(color: Colors.black87, blurRadius: 6),
-                            ],
+                          // Title
+                          Text(
+                            slide.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(color: Colors.black87, blurRadius: 10),
+                              ],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+
+                          // Subtitle
+                          Text(
+                            slide.subtitle,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 12,
+                              shadows: const [
+                                Shadow(color: Colors.black87, blurRadius: 6),
+                              ],
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               );
             },

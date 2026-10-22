@@ -41,5 +41,21 @@ void main() {
       expect(slide.tag, 'Campus');
       expect(slide.badge, 'GL Bajaj');
     });
+
+    test('ShowcaseSlide parse asset image path', () {
+      final json = {
+        'id': 1,
+        'title': 'GL Bajaj Main Gate',
+        'subtitle': 'Campus Life',
+        'tag': 'Campus',
+        'image_url': 'assets/images/campus/glb_gate1.webp',
+        'badge': 'Gate 1',
+        'is_asset': true,
+      };
+
+      final slide = ShowcaseSlide.fromJson(json);
+      expect(slide.isAsset, true);
+      expect(slide.imageUrl, 'assets/images/campus/glb_gate1.webp');
+    });
   });
 }

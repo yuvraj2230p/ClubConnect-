@@ -39,7 +39,7 @@ class CurrentUserView(APIView):
 
 class ShowcaseSlidesView(APIView):
     """
-    Returns curated high-resolution photos of GL Bajaj campus & active student clubs
+    Returns curated photos of GL Bajaj campus
     for the login screen's dynamic sliding carousel.
     """
     permission_classes = [AllowAny]
@@ -48,43 +48,30 @@ class ShowcaseSlidesView(APIView):
         slides = [
             {
                 "id": 1,
-                "title": "GL Bajaj Institute of Technology & Management",
-                "subtitle": "Home to 30+ Thriving Student Clubs & Societies",
-                "tag": "Campus Life",
-                "image_url": "https://images.unsplash.com/photo-1562774053-701939374585?w=1200&auto=format&fit=crop&q=80",
-                "badge": "GL Bajaj Greater Noida"
+                "title": "G.L. Bajaj Institute of Technology & Management",
+                "subtitle": "Gate 1 & Main Academic Campus, Greater Noida",
+                "tag": "GL Bajaj Campus",
+                "image_url": "assets/images/campus/glb_gate1.webp",
+                "badge": "Gate 1",
+                "is_asset": True
             },
             {
                 "id": 2,
-                "title": "Google Developer Student Club (GDSC)",
-                "subtitle": "Hackathons, Cloud Jams & Open-Source Projects",
-                "tag": "Tech Club",
-                "image_url": "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&auto=format&fit=crop&q=80",
-                "badge": "Active Community"
+                "title": "Innovation & Green Academic Environment",
+                "subtitle": "Home to 30+ Thriving Student Clubs & Societies",
+                "tag": "Campus Life",
+                "image_url": "assets/images/campus/glb_academic.webp",
+                "badge": "Academic Block 1",
+                "is_asset": True
             },
             {
                 "id": 3,
-                "title": "Verve Cultural Club & Street Plays",
-                "subtitle": "Expressing Creativity through Dance, Drama & Music",
-                "tag": "Cultural Fest",
-                "image_url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80",
-                "badge": "Annual Fest"
-            },
-            {
-                "id": 4,
-                "title": "Rotaract Club of GLBITM",
-                "subtitle": "Youth Leadership, Social Impact & Community Drives",
-                "tag": "Social Welfare",
-                "image_url": "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&auto=format&fit=crop&q=80",
-                "badge": "Leadership"
-            },
-            {
-                "id": 5,
-                "title": "Droid & Robotics Club",
-                "subtitle": "Autonomous Bots, Drone Arenas & AI Hardware",
-                "tag": "Robotics",
-                "image_url": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&auto=format&fit=crop&q=80",
-                "badge": "Innovation Lab"
+                "title": "Club Connect: The Student Society Hub",
+                "subtitle": "Explore Technical, Cultural, Robotics & Sports Clubs",
+                "tag": "Societies & Fests",
+                "image_url": "assets/images/campus/glb_panorama.jpg",
+                "badge": "Campus Panorama",
+                "is_asset": True
             }
         ]
         return Response({"slides": slides})
