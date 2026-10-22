@@ -102,6 +102,34 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
+  Future<bool> loginWithIdCardScan(String codeData) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await ApiClient.post(ApiConstants.idCardScan, {
+        'code_data': codeData,
+      });
+
+      if (response != null && response['token'] != null) {
+        final token = response['token'];
+        await ApiClient.saveToken(token);
+        _currentUser = UserModel.fromJson(response['user']);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+      _errorMessage = "College ID card verification failed.";
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('HttpException: ', '');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
   Future<void> checkAuthStatus() async {
     try {
       final token = await ApiClient.getToken();

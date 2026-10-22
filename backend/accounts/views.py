@@ -30,6 +30,33 @@ class SIMLoginView(APIView):
             "user": UserSerializer(user).data
         }, status=status.HTTP_200_OK)
 
+class IDCardScanLoginView(APIView):
+    """
+    Authenticates students by scanning the barcode or QR code on their physical college ID card.
+    Extracts Admission Number or Roll Number and auto-verifies with the SIM database.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        code_data = request.data.get('code_data', '').strip()
+        if not code_data:
+            return Response({"error": "No barcode or QR code data detected from scan."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = SIMAuthService.authenticate_id_card_scan(code_data)
+        if not user:
+            return Response(
+                {"error": "ID card could not be matched with college records."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        token = SIMAuthService.generate_jwt_for_user(user)
+        return Response({
+            "message": f"Welcome {user.full_name}! College ID Card verified successfully.",
+            "token": token,
+            "user": UserSerializer(user).data,
+            "auth_method": "id_card_scan"
+        }, status=status.HTTP_200_OK)
+
 class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
 

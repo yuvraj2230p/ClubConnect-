@@ -34,3 +34,23 @@ class SIMAuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('slides', response.data)
         self.assertGreater(len(response.data['slides']), 0)
+
+    def test_id_card_barcode_login(self):
+        # Physical ID card barcode scan
+        response = self.client.post(reverse('id_card_scan'), {
+            'code_data': '*GLB22CSE101*'
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        self.assertEqual(response.data['user']['admission_number'], 'GLB22CSE101')
+        self.assertEqual(response.data['auth_method'], 'id_card_scan')
+
+    def test_id_card_qr_code_login(self):
+        # Physical ID card QR code JSON scan
+        qr_payload = '{"admission_number": "GLB21IT045", "name": "Ananya Verma"}'
+        response = self.client.post(reverse('id_card_scan'), {
+            'code_data': qr_payload
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        self.assertEqual(response.data['user']['admission_number'], 'GLB21IT045')

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/auth_provider.dart';
+import 'id_card_scanner_modal.dart';
 
 class SimLoginCard extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -281,6 +282,59 @@ class _SimLoginCardState extends State<SimLoginCard> {
                             ),
                           ],
                         ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // OR Divider in Warm Beige
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: Color(0x33DDB892), thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(
+                        color: AppColors.softBeige.withOpacity(0.6),
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: Divider(color: Color(0x33DDB892), thickness: 1)),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              // Scan Physical College ID Card Button
+              OutlinedButton.icon(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    isScrollControlled: true,
+                    builder: (context) => IdCardScannerModal(
+                      onLoginSuccess: widget.onLoginSuccess,
+                    ),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0x77DDB892), width: 1.4),
+                  backgroundColor: const Color(0x4D2A1C14),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                icon: const Icon(Icons.qr_code_scanner, color: AppColors.beige, size: 20),
+                label: const Text(
+                  'Scan College ID Card (Barcode / QR)',
+                  style: TextStyle(
+                    color: AppColors.ivory,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
               ),
 

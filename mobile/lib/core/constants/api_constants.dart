@@ -17,6 +17,7 @@ class ApiConstants {
 
   // Endpoints
   static const String simLogin = '/auth/sim-login/';
+  static const String idCardScan = '/auth/id-card-scan/';
   static const String currentUser = '/auth/me/';
   static const String showcaseSlides = '/auth/showcase-slides/';
   

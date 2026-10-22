@@ -66,6 +66,46 @@ class SIMAuthService:
         return cls._authenticate_simulated(identifier_clean, password)
 
     @classmethod
+    def authenticate_id_card_scan(cls, code_data: str):
+        """
+        Extracts Admission Number or Roll Number from physical GL Bajaj ID card barcode or QR code.
+        Format samples supported:
+        - Plain Admission No: "GLB22CSE101"
+        - University Roll No: "2201920100101"
+        - Prefixed barcode: "GLBITM:GLB22CSE101" or "ID:GLB21IT045"
+        - QR Code JSON: {"admission_number": "GLB22CSE101", ...}
+        - QR URL: "https://glbitm.ac.in/student/verify?id=GLB22CSE101"
+        """
+        import json, re
+        code_str = code_data.strip()
+
+        # 1. Check if JSON payload inside QR code
+        try:
+            parsed = json.loads(code_str)
+            if isinstance(parsed, dict):
+                identifier = parsed.get('admission_number') or parsed.get('roll_number') or parsed.get('email')
+                if identifier:
+                    return cls.authenticate_sim(str(identifier), password="id_card_scanned_token")
+        except Exception:
+            pass
+
+        # 2. Check if URL with query param e.g. ?id= or ?adm=
+        if 'http://' in code_str or 'https://' in code_str:
+            match = re.search(r'[?&](?:id|adm|admission|roll)=([A-Za-z0-9_-]+)', code_str)
+            if match:
+                identifier = match.group(1)
+                return cls.authenticate_sim(identifier, password="id_card_scanned_token")
+
+        # 3. Strip common barcode framing characters e.g. *GLB22CSE101* or GLBITM:GLB22CSE101
+        cleaned = re.sub(r'^[*#:]+|[*#:]+$', '', code_str)
+        if ':' in cleaned:
+            cleaned = cleaned.split(':')[-1]
+        if '/' in cleaned:
+            cleaned = cleaned.split('/')[-1]
+
+        return cls.authenticate_sim(cleaned, password="id_card_scanned_token")
+
+    @classmethod
     def _authenticate_live_sim_api(cls, identifier: str, password: str, api_url: str):
         import requests
         try:
