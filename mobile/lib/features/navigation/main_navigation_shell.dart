@@ -36,7 +36,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceCard.withOpacity(0.95),
+          color: AppColors.espressoDark.withOpacity(0.96),
           border: const Border(
             top: BorderSide(color: AppColors.surfaceBorder, width: 1),
           ),
@@ -76,15 +76,16 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         duration: const Duration(milliseconds: 250),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentIndigo.withOpacity(0.18) : Colors.transparent,
+          color: isSelected ? AppColors.caramel.withOpacity(0.25) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
+          border: isSelected ? Border.all(color: AppColors.beige.withOpacity(0.35)) : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               isSelected ? selectedIcon : unselectedIcon,
-              color: isSelected ? AppColors.accentIndigo : AppColors.textSecondary,
+              color: isSelected ? AppColors.beige : AppColors.softBeige.withOpacity(0.6),
               size: 22,
             ),
             if (isSelected) ...[
@@ -92,7 +93,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
               Text(
                 label,
                 style: const TextStyle(
-                  color: AppColors.accentIndigo,
+                  color: AppColors.beige,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),

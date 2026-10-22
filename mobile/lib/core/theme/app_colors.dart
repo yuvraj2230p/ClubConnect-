@@ -1,54 +1,83 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // GL Bajaj Identity & Primary Shades
-  static const Color primaryDark = Color(0xFF091428);      // Midnight Sapphire
-  static const Color primary = Color(0xFF0E2A47);          // GL Bajaj Deep Navy
-  static const Color primaryLight = Color(0xFF1E3A8A);     // Royal Blue
-  static const Color accentIndigo = Color(0xFF4361EE);     // Vibrant Tech Blue
-  static const Color accentGold = Color(0xFFFFB703);       // College Gold / Amber
-  static const Color accentCyan = Color(0xFF06D6A0);       // Success Emerald
+  // Rich Brown & Beige Identity Palette
+  static const Color espressoDark = Color(0xFF140D08);     // Deep Roasted Espresso (Background)
+  static const Color espresso = Color(0xFF1C130D);         // Dark Coffee
+  static const Color warmBrown = Color(0xFF2C1E16);        // Warm Mocha
+  static const Color chestnut = Color(0xFF432F23);         // Chestnut Brown
+  static const Color caramel = Color(0xFFB87D4B);          // Rich Caramel Accent
+  static const Color lightCaramel = Color(0xFFC99365);     // Golden Caramel
 
+  // Warm Beige & Cream Shades
+  static const Color beige = Color(0xFFDDB892);            // Classic Warm Beige
+  static const Color softBeige = Color(0xFFE6CCB2);        // Soft Almond Beige
+  static const Color cream = Color(0xFFF5EBE0);            // Vanilla Cream Text
+  static const Color ivory = Color(0xFFFAF6F0);            // Bright Ivory
+  static const Color amberHoney = Color(0xFFE5A962);       // Honey Accent
+  static const Color accentCyan = Color(0xFF52B788);       // Sage Emerald Verified Badge
+
+  // Aliases for compatibility
+  static const Color primaryDark = espressoDark;
+  static const Color primary = warmBrown;
+  static const Color primaryLight = chestnut;
+  static const Color accentIndigo = caramel;               // Replaced with Caramel
+  static const Color accentGold = beige;                   // Replaced with Beige
+  
   // Backgrounds & Surfaces
-  static const Color bgDark = Color(0xFF050B14);           // Ultra Dark Background
-  static const Color surfaceDark = Color(0xFF0D1B2A);       // Elevated Card Dark
-  static const Color surfaceCard = Color(0xFF132238);       // Card Background
-  static const Color surfaceBorder = Color(0xFF1F3554);     // Border outline
+  static const Color bgDark = espressoDark;
+  static const Color surfaceDark = Color(0xFF1E140E);
+  static const Color surfaceCard = Color(0xFF2A1C14);
+  static const Color surfaceBorder = Color(0xFF4A3425);
 
-  // Light Mode Surfaces (if needed)
-  static const Color bgLight = Color(0xFFF8FAFC);
-  static const Color surfaceLight = Color(0xFFFFFFFF);
+  // Translucent / Glassmorphism Surfaces for photo show-through
+  static const Color glassCard = Color(0xCC261912);       // 80% opacity warm mocha
+  static const Color glassCardSubtle = Color(0xAA1F140D); // 66% opacity for deep blur
+  static const Color glassBorder = Color(0x40DDB892);     // 25% opacity beige border
 
   // Text Colors
-  static const Color textPrimary = Color(0xFFF8FAFC);
-  static const Color textSecondary = Color(0xFF94A3B8);
-  static const Color textMuted = Color(0xFF64748B);
+  static const Color textPrimary = ivory;
+  static const Color textSecondary = softBeige;
+  static const Color textMuted = Color(0xFFA89687);
 
   // Status & Feedback
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFEF4444);
+  static const Color success = Color(0xFF52B788);
+  static const Color warning = Color(0xFFE09F3E);
+  static const Color error = Color(0xFFD64545);
 
-  // Gradients
+  // Warm Collegiate Gradients
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
       Colors.transparent,
-      Color(0x99050B14),
-      Color(0xFF050B14),
+      Color(0x66140D08),
+      Color(0xCC140D08),
+      Color(0xFF140D08),
     ],
-    stops: [0.3, 0.7, 1.0],
+    stops: [0.0, 0.4, 0.75, 1.0],
   );
 
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF1E3A8A), Color(0xFF4361EE)],
+    colors: [Color(0xFF8F5E36), Color(0xFFC99365)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient caramelGradient = LinearGradient(
+    colors: [Color(0xFFB87D4B), Color(0xFFDDB892)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient goldGradient = LinearGradient(
-    colors: [Color(0xFFFFB703), Color(0xFFFB8500)],
+    colors: [Color(0xFFDDB892), Color(0xFFE5A962)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient glassGradient = LinearGradient(
+    colors: [Color(0xDD2D1E16), Color(0xBB1F140D)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

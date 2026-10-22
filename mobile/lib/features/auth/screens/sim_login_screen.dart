@@ -26,7 +26,7 @@ class SimLoginScreen extends StatelessWidget {
               children: [
                 ShowcaseCarousel(
                   slides: authProvider.slides,
-                  height: size.height * 0.42,
+                  height: size.height * 0.44,
                 ),
 
                 // Top College Branding Bar
@@ -36,13 +36,13 @@ class SimLoginScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // GL Bajaj Logo Pill
+                        // GL Bajaj Logo Pill in warm Brown & Beige
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryDark.withOpacity(0.85),
+                            color: AppColors.espressoDark.withOpacity(0.85),
                             borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.white12),
+                            border: Border.all(color: AppColors.beige.withOpacity(0.35)),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.4),
@@ -53,12 +53,12 @@ class SimLoginScreen extends StatelessWidget {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.hub_rounded, color: AppColors.accentGold, size: 20),
+                              Icon(Icons.hub_rounded, color: AppColors.beige, size: 20),
                               SizedBox(width: 8),
                               Text(
                                 'CLUB CONNECT',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.ivory,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 13,
                                   letterSpacing: 1.2,
@@ -72,9 +72,9 @@ class SimLoginScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.black54,
+                            color: AppColors.espressoDark.withOpacity(0.8),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white10),
+                            border: Border.all(color: AppColors.beige.withOpacity(0.2)),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -84,7 +84,7 @@ class SimLoginScreen extends StatelessWidget {
                               Text(
                                 'GL Bajaj, Gr. Noida',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: AppColors.softBeige,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -99,9 +99,9 @@ class SimLoginScreen extends StatelessWidget {
               ],
             ),
 
-            // Bottom Section: SIM Login Form with subtle negative overlap
+            // Bottom Section: Translucent SIM Login Form over the background
             Transform.translate(
-              offset: const Offset(0, -20),
+              offset: const Offset(0, -22),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
@@ -113,16 +113,16 @@ class SimLoginScreen extends StatelessWidget {
 
                     const SizedBox(height: 24),
 
-                    // College Accreditation Footer
+                    // College Accreditation Footer in Warm Beige
                     Column(
                       children: [
                         Text(
                           'G.L. BAJAJ INSTITUTE OF TECHNOLOGY & MANAGEMENT',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
+                            color: AppColors.softBeige.withOpacity(0.7),
                             fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
                           ),
                         ),
@@ -131,7 +131,7 @@ class SimLoginScreen extends StatelessWidget {
                           'Approved by AICTE | Affiliated to Dr. A.P.J. Abdul Kalam Technical University',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.3),
+                            color: AppColors.textMuted.withOpacity(0.6),
                             fontSize: 9,
                           ),
                         ),

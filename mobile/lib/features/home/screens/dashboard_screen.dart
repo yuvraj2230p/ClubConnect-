@@ -229,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onPressed: () => widget.onTabChange(2),
                       child: const Text(
                         'See All',
-                        style: TextStyle(color: AppColors.accentIndigo, fontWeight: FontWeight.w600, fontSize: 13),
+                        style: TextStyle(color: AppColors.beige, fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                     ),
                   ],
@@ -251,17 +251,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primaryLight.withOpacity(0.8),
-            AppColors.accentIndigo,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppColors.caramelGradient,
         boxShadow: [
           BoxShadow(
-            color: AppColors.accentIndigo.withOpacity(0.3),
+            color: AppColors.caramel.withOpacity(0.35),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -296,12 +289,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.accentGold,
+                        color: AppColors.cream,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text(
                         '₹2.5L PRIZES',
-                        style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900),
+                        style: TextStyle(color: AppColors.espressoDark, fontSize: 10, fontWeight: FontWeight.w900),
                       ),
                     ),
                   ],
@@ -333,8 +326,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ElevatedButton(
                       onPressed: () => widget.onTabChange(2),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primaryDark,
+                        backgroundColor: AppColors.cream,
+                        foregroundColor: AppColors.espressoDark,
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -518,8 +511,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ElevatedButton(
             onPressed: () => widget.onTabChange(2),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accentIndigo.withOpacity(0.2),
-              foregroundColor: AppColors.accentIndigo,
+              backgroundColor: AppColors.caramel.withOpacity(0.25),
+              foregroundColor: AppColors.beige,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),

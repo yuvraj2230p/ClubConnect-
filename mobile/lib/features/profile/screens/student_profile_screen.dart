@@ -25,16 +25,16 @@ class StudentProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            // GL Bajaj Digital Identity Card
+            // GL Bajaj Digital Identity Card in Rich Leather-Brown & Gold/Beige
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF0F2B48), Color(0xFF0A182E)],
+                  colors: [Color(0xFF382317), Color(0xFF1E130D)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColors.surfaceBorder, width: 1.5),
+                border: Border.all(color: AppColors.beige.withOpacity(0.35), width: 1.5),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.4),
@@ -52,7 +52,7 @@ class StudentProfileScreen extends StatelessWidget {
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.school, color: AppColors.accentGold, size: 24),
+                          Icon(Icons.school, color: AppColors.beige, size: 24),
                           SizedBox(width: 8),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,12 +200,16 @@ class StudentProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.surfaceBorder),
       ),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.accentIndigo),
-        title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
-        onTap: onTap,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: ListTile(
+          leading: Icon(icon, color: AppColors.caramel),
+          title: Text(title, style: const TextStyle(color: AppColors.ivory, fontSize: 14, fontWeight: FontWeight.w600)),
+          subtitle: Text(subtitle, style: const TextStyle(color: AppColors.softBeige, fontSize: 12)),
+          trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+          onTap: onTap,
+        ),
       ),
     );
   }

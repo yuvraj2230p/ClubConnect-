@@ -116,19 +116,19 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                     child: _buildSlideImage(slide),
                   ),
 
-                  // Multi-layer Gradient Overlay for readability
+                  // Multi-layer Warm Brown Gradient Overlay for readability
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          AppColors.bgDark.withOpacity(0.35),
+                          AppColors.espressoDark.withOpacity(0.25),
                           Colors.transparent,
-                          AppColors.bgDark.withOpacity(0.85),
-                          AppColors.bgDark,
+                          AppColors.espressoDark.withOpacity(0.65),
+                          AppColors.espressoDark,
                         ],
-                        stops: const [0.0, 0.35, 0.8, 1.0],
+                        stops: const [0.0, 0.35, 0.75, 1.0],
                       ),
                     ),
                   ),
@@ -149,14 +149,14 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accentIndigo.withOpacity(0.85),
+                                  color: AppColors.caramel.withOpacity(0.9),
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.white24),
+                                  border: Border.all(color: AppColors.beige.withOpacity(0.4)),
                                 ),
                                 child: Text(
                                   slide.tag.toUpperCase(),
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.ivory,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 0.8,
@@ -168,14 +168,14 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: Colors.black54,
+                                    color: AppColors.espresso.withOpacity(0.7),
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.white12),
+                                    border: Border.all(color: AppColors.beige.withOpacity(0.25)),
                                   ),
                                   child: Text(
                                     slide.badge,
                                     style: const TextStyle(
-                                      color: AppColors.accentGold,
+                                      color: AppColors.beige,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -189,7 +189,7 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                           Text(
                             slide.title,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.ivory,
                               fontSize: 19,
                               fontWeight: FontWeight.bold,
                               shadows: [
@@ -205,7 +205,7 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                           Text(
                             slide.subtitle,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.85),
+                              color: AppColors.softBeige.withOpacity(0.9),
                               fontSize: 12,
                               shadows: const [
                                 Shadow(color: Colors.black87, blurRadius: 6),
@@ -233,8 +233,8 @@ class _ShowcaseCarouselState extends State<ShowcaseCarousel> {
                 dotHeight: 5,
                 dotWidth: 6,
                 expansionFactor: 4,
-                activeDotColor: AppColors.accentGold,
-                dotColor: Colors.white30,
+                activeDotColor: AppColors.beige,
+                dotColor: Color(0x66DDB892),
                 spacing: 4,
               ),
             ),

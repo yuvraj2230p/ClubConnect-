@@ -10,13 +10,13 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.bgDark,
-      primaryColor: AppColors.primaryLight,
+      primaryColor: AppColors.caramel,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.accentIndigo,
-        secondary: AppColors.accentGold,
+        primary: AppColors.caramel,
+        secondary: AppColors.beige,
         surface: AppColors.surfaceDark,
         error: AppColors.error,
-        onPrimary: Colors.white,
+        onPrimary: AppColors.espressoDark,
         onSurface: AppColors.textPrimary,
       ),
       textTheme: baseTextTheme.copyWith(
@@ -45,10 +45,10 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceCard.withOpacity(0.8),
+        fillColor: const Color(0x991E140E),
         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
         labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
-        prefixIconColor: AppColors.accentIndigo,
+        prefixIconColor: AppColors.caramel,
         suffixIconColor: AppColors.textSecondary,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
@@ -61,7 +61,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.accentIndigo, width: 2),
+          borderSide: const BorderSide(color: AppColors.caramel, width: 1.8),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -70,8 +70,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accentIndigo,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.caramel,
+          foregroundColor: AppColors.espressoDark,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
@@ -79,7 +79,7 @@ class AppTheme {
           ),
           textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
           ),
         ),
