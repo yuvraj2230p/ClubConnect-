@@ -103,6 +103,17 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
   }
 
   Widget _buildEventCard(BuildContext context, EventModel event, EventsProvider provider) {
+    String bannerAsset = 'assets/images/campus/glb_academic.webp';
+    if (event.slug.contains('codespace')) {
+      bannerAsset = 'assets/images/clubs/codespace_event.jpg';
+    } else if (event.slug.contains('shrinik') || event.slug.contains('glb-talks')) {
+      bannerAsset = 'assets/images/clubs/shrinik_event.jpg';
+    } else if (event.slug.contains('navrang') || event.slug.contains('tandav')) {
+      bannerAsset = 'assets/images/clubs/navrang_event.jpg';
+    } else if (event.slug.contains('vividhata') || event.slug.contains('next-orbit')) {
+      bannerAsset = 'assets/images/clubs/vividhata_event.jpg';
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
@@ -122,7 +133,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
                 Image.network(
                   event.bannerUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceDark),
+                  errorBuilder: (_, __, ___) => Image.asset(bannerAsset, fit: BoxFit.cover),
                 ),
                 Container(
                   decoration: BoxDecoration(

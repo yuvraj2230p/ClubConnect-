@@ -130,6 +130,89 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
+  Future<bool> verifyAndLoginWithIdCard({
+    required String admissionNumber,
+    required String collegeEmail,
+    required String qrCodeData,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await ApiClient.post(ApiConstants.verifyIdCard, {
+        'admission_number': admissionNumber,
+        'college_email': collegeEmail,
+        'qr_code_data': qrCodeData,
+      });
+
+      if (response != null && response['token'] != null) {
+        final token = response['token'];
+        await ApiClient.saveToken(token);
+        _currentUser = UserModel.fromJson(response['user']);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+      _errorMessage = "ID Card Verification failed.";
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('HttpException: ', '');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  /// Extracts student portrait photo and barcode directly from the physical ID card,
+  /// attaches the photo to user's profile and updates the database avatar.
+  Future<Map<String, dynamic>?> extractPhotoFromIdCard({
+    String? base64Image,
+    bool sampleCard = false,
+    String? admissionNumber,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final Map<String, dynamic> body = {};
+      if (sampleCard) {
+        body['sample_card'] = 'yuvraj_front';
+      }
+      if (base64Image != null) {
+        body['card_image_base64'] = base64Image;
+      }
+      if (admissionNumber != null) {
+        body['admission_number'] = admissionNumber;
+      }
+
+      final response = await ApiClient.post(ApiConstants.extractIdCardPhoto, body);
+      if (response != null && response['status'] == 'success') {
+        if (response['token'] != null) {
+          await ApiClient.saveToken(response['token']);
+        }
+        if (response['user'] != null) {
+          _currentUser = UserModel.fromJson(response['user']);
+        } else if (_currentUser != null && response['avatar_url'] != null) {
+          _currentUser = _currentUser!.copyWith(
+            avatarUrl: 'http://127.0.0.1:8000${response['avatar_url']}',
+          );
+        }
+        _isLoading = false;
+        notifyListeners();
+        return response;
+      }
+      _errorMessage = response?['error'] ?? "Failed to extract photo from ID card.";
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('HttpException: ', '');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return null;
+  }
+
   Future<void> checkAuthStatus() async {
     try {
       final token = await ApiClient.getToken();

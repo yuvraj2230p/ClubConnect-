@@ -67,6 +67,11 @@ flutter:
 
   assets:
     - assets/images/campus/
+    - assets/images/clubs/
+    - assets/images/glb_logo.jpg
+    - assets/images/yuvraj_avatar.jpg
+    - assets/images/yuvraj_card_front.jpg
+    - assets/images/yuvraj_card_back.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

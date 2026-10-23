@@ -38,24 +38,32 @@ class SimLoginScreen extends StatelessWidget {
                       children: [
                         // GL Bajaj Logo Pill in warm Brown & Beige
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.espressoDark.withOpacity(0.85),
+                            color: AppColors.espressoDark.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: AppColors.beige.withOpacity(0.35)),
+                            border: Border.all(color: AppColors.beige.withOpacity(0.4), width: 1.2),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.4),
-                                blurRadius: 10,
+                                color: Colors.black.withOpacity(0.45),
+                                blurRadius: 12,
                               ),
                             ],
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.hub_rounded, color: AppColors.beige, size: 20),
-                              SizedBox(width: 8),
-                              Text(
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.asset(
+                                  'assets/images/glb_logo.jpg',
+                                  width: 26,
+                                  height: 26,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
                                 'CLUB CONNECT',
                                 style: TextStyle(
                                   color: AppColors.ivory,

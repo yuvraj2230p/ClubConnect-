@@ -15,59 +15,111 @@ class SimLoginCard extends StatefulWidget {
 }
 
 class _SimLoginCardState extends State<SimLoginCard> {
-  final _identifierController = TextEditingController(text: 'GLB22CSE101');
+  final _admissionController = TextEditingController(text: '25116CN451');
+  final _emailController = TextEditingController(text: '25116cn451@glbitm.ac.in');
   final _passwordController = TextEditingController(text: 'simpass123');
   bool _obscurePassword = true;
+  bool _showPasswordLogin = false; // By default prioritize physical ID card scan
+
+  @override
+  void initState() {
+    super.initState();
+    _admissionController.addListener(_onAdmissionChanged);
+  }
 
   @override
   void dispose() {
-    _identifierController.dispose();
+    _admissionController.removeListener(_onAdmissionChanged);
+    _admissionController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() async {
-    final identifier = _identifierController.text.trim();
-    final password = _passwordController.text;
+  void _onAdmissionChanged() {
+    final adm = _admissionController.text.trim().toLowerCase();
+    if (adm.isNotEmpty) {
+      final currentEmail = _emailController.text.trim().toLowerCase();
+      // Auto-suggest college email if empty or matches standard pattern
+      if (currentEmail.isEmpty || currentEmail.endsWith('@glbitm.ac.in')) {
+        _emailController.text = '$adm@glbitm.ac.in';
+      }
+    }
+  }
 
-    if (identifier.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your college email or admission number.'),
-          backgroundColor: AppColors.warning,
-        ),
-      );
+  void _fillDemo(String adm, String email, String pass) {
+    setState(() {
+      _admissionController.text = adm;
+      _emailController.text = email;
+      _passwordController.text = pass;
+    });
+  }
+
+  void _openIdScanner() {
+    final adm = _admissionController.text.trim();
+    final email = _emailController.text.trim();
+
+    if (adm.isEmpty) {
+      _showWarning('Please enter your GL Bajaj Admission Number.');
+      return;
+    }
+
+    if (!email.toLowerCase().endsWith('@glbitm.ac.in')) {
+      _showWarning('College email must end with @glbitm.ac.in');
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => IdCardScannerModal(
+        onLoginSuccess: widget.onLoginSuccess,
+        initialAdmissionNumber: adm,
+        initialEmail: email,
+      ),
+    );
+  }
+
+  void _handlePasswordLogin() async {
+    final adm = _admissionController.text.trim();
+    final pass = _passwordController.text;
+
+    if (adm.isEmpty || pass.isEmpty) {
+      _showWarning('Please enter your admission number and SIM password.');
       return;
     }
 
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.loginWithSIM(identifier, password);
+    final success = await authProvider.loginWithSIM(adm, pass);
     if (success && mounted) {
       widget.onLoginSuccess();
     }
   }
 
-  void _fillDemo(String id, String pass) {
-    setState(() {
-      _identifierController.text = id;
-      _passwordController.text = pass;
-    });
+  void _showWarning(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: AppColors.warning,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
 
-    // Translucent Frosted Glass Card showing the college photo subtly beneath
+    // Translucent Frosted Glass Card in Warm Beige & Mocha Brown
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xB8231710), // Warm brown 72% opacity
+            color: const Color(0xB8231710), // Warm mocha 72% opacity
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0x55DDB892), width: 1.2), // Warm beige translucent border
+            border: Border.all(color: const Color(0x55DDB892), width: 1.2),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.45),
@@ -76,21 +128,33 @@ class _SimLoginCardState extends State<SimLoginCard> {
               ),
             ],
           ),
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // SIM Status Header
+              // Header
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.caramel.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.beige.withOpacity(0.3)),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.beige.withOpacity(0.4), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.caramel.withOpacity(0.25),
+                          blurRadius: 10,
+                        ),
+                      ],
                     ),
-                    child: const Icon(Icons.account_balance, color: AppColors.beige, size: 22),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/images/glb_logo.jpg',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -98,11 +162,11 @@ class _SimLoginCardState extends State<SimLoginCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'GL Bajaj SIM Login',
+                          'Student ID Verification',
                           style: TextStyle(
                             color: AppColors.ivory,
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 15,
                           ),
                         ),
                         Row(
@@ -117,7 +181,7 @@ class _SimLoginCardState extends State<SimLoginCard> {
                             ),
                             const SizedBox(width: 6),
                             const Text(
-                              'Direct College DB Sync',
+                              'GLBITM SIM Records Sync',
                               style: TextStyle(
                                 color: AppColors.softBeige,
                                 fontSize: 11,
@@ -136,56 +200,79 @@ class _SimLoginCardState extends State<SimLoginCard> {
                       border: Border.all(color: AppColors.beige.withOpacity(0.4)),
                     ),
                     child: const Text(
-                      'SIM ERP',
+                      '2-STEP AUTH',
                       style: TextStyle(
                         color: AppColors.beige,
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              // Identifier Field
+              // Step 1: Admission Number Field
               TextField(
-                controller: _identifierController,
-                style: const TextStyle(color: AppColors.ivory, fontSize: 14),
+                controller: _admissionController,
+                textCapitalization: TextCapitalization.characters,
+                style: const TextStyle(color: AppColors.ivory, fontSize: 14, fontFamily: 'Courier', fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
-                  labelText: 'College Email / Admission No.',
-                  hintText: 'e.g. GLB22CSE101 or name@glbitm.ac.in',
-                  prefixIcon: const Icon(Icons.badge_outlined, size: 20, color: AppColors.caramel),
-                  suffixIcon: _identifierController.text.isNotEmpty
+                  labelText: 'College Admission Number',
+                  hintText: 'e.g. GLB22CSE101 or 2201920100101',
+                  prefixIcon: const Icon(Icons.fingerprint, size: 20, color: AppColors.caramel),
+                  suffixIcon: _admissionController.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear, size: 18, color: AppColors.softBeige),
-                          onPressed: () => setState(() => _identifierController.clear()),
+                          onPressed: () => setState(() => _admissionController.clear()),
                         )
                       : null,
                 ),
               ),
 
+              const SizedBox(height: 12),
+
+              // Step 2: College Gmail ID Field (starts with admission number + @glbitm.ac.in)
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: AppColors.ivory, fontSize: 13),
+                decoration: InputDecoration(
+                  labelText: 'Official College Gmail ID',
+                  hintText: 'e.g. <admission_no>@glbitm.ac.in',
+                  helperText: 'Must start with Admission No. & end with @glbitm.ac.in',
+                  helperStyle: TextStyle(color: AppColors.softBeige.withOpacity(0.7), fontSize: 10),
+                  prefixIcon: const Icon(Icons.alternate_email, size: 18, color: AppColors.caramel),
+                  suffixIcon: const Icon(Icons.verified, size: 16, color: AppColors.accentCyan),
+                ),
+              ),
+
               const SizedBox(height: 14),
 
-              // Password Field
-              TextField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                style: const TextStyle(color: AppColors.ivory, fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'SIM Portal Password',
-                  hintText: 'Enter college portal password',
-                  prefixIcon: const Icon(Icons.lock_outline, size: 20, color: AppColors.caramel),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      size: 20,
-                      color: AppColors.softBeige,
-                    ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              // Quick Test Student Records Chips
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '⚡ Tap to load sample student credentials:',
+                    style: TextStyle(color: AppColors.softBeige, fontSize: 11),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildDemoChip('Yuvraj (25116CN451 • CSIT)', '25116CN451', '25116cn451@glbitm.ac.in'),
+                        const SizedBox(width: 8),
+                        _buildDemoChip('Ananya (IT • 8th Sem)', 'GLB21IT045', 'glb21it045@glbitm.ac.in'),
+                        const SizedBox(width: 8),
+                        _buildDemoChip('Rohan (AIML • 4th Sem)', 'GLB23AIML022', 'glb23aiml022@glbitm.ac.in'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
 
               if (authProvider.errorMessage != null) ...[
@@ -214,33 +301,7 @@ class _SimLoginCardState extends State<SimLoginCard> {
 
               const SizedBox(height: 18),
 
-              // Fast Test Credentials Selector
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '⚡ Tap to test pre-verified student records:',
-                    style: TextStyle(color: AppColors.softBeige, fontSize: 11),
-                  ),
-                  const SizedBox(height: 8),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildDemoChip('Yuvraj (CSE)', 'GLB22CSE101'),
-                        const SizedBox(width: 8),
-                        _buildDemoChip('Ananya (Lead)', 'GLB21IT045'),
-                        const SizedBox(width: 8),
-                        _buildDemoChip('Rohan (AI/ML)', 'GLB23AIML022'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Submit Button in Warm Caramel & Beige
+              // Primary Action: Scan Physical ID Card (QR / Barcode)
               Container(
                 decoration: BoxDecoration(
                   gradient: AppColors.primaryGradient,
@@ -254,7 +315,7 @@ class _SimLoginCardState extends State<SimLoginCard> {
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: authProvider.isLoading ? null : _handleLogin,
+                  onPressed: authProvider.isLoading ? null : _openIdScanner,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
@@ -269,12 +330,12 @@ class _SimLoginCardState extends State<SimLoginCard> {
                       : const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.login, size: 20, color: AppColors.espressoDark),
+                            Icon(Icons.qr_code_scanner, size: 22, color: AppColors.espressoDark),
                             SizedBox(width: 10),
                             Text(
-                              'Authenticate with SIM',
+                              'Scan ID Card & Auto-Verify',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.3,
                                 color: AppColors.espressoDark,
@@ -285,69 +346,73 @@ class _SimLoginCardState extends State<SimLoginCard> {
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
-              // OR Divider in Warm Beige
-              Row(
-                children: [
-                  const Expanded(child: Divider(color: Color(0x33DDB892), thickness: 1)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      'OR',
-                      style: TextStyle(
-                        color: AppColors.softBeige.withOpacity(0.6),
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+              // Password toggle for students without physical card
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => setState(() => _showPasswordLogin = !_showPasswordLogin),
+                  icon: Icon(
+                    _showPasswordLogin ? Icons.keyboard_arrow_up : Icons.lock_outline,
+                    size: 16,
+                    color: AppColors.softBeige,
+                  ),
+                  label: Text(
+                    _showPasswordLogin ? 'Hide Password Login' : 'Don\'t have physical card? Use SIM Password',
+                    style: TextStyle(
+                      color: AppColors.softBeige.withOpacity(0.9),
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ),
+
+              if (_showPasswordLogin) ...[
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  style: const TextStyle(color: AppColors.ivory, fontSize: 13),
+                  decoration: InputDecoration(
+                    labelText: 'SIM Portal Password',
+                    hintText: 'Enter college ERP password',
+                    prefixIcon: const Icon(Icons.key, size: 18, color: AppColors.caramel),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        size: 18,
+                        color: AppColors.softBeige,
                       ),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  const Expanded(child: Divider(color: Color(0x33DDB892), thickness: 1)),
-                ],
-              ),
-
-              const SizedBox(height: 14),
-
-              // Scan Physical College ID Card Button
-              OutlinedButton.icon(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    backgroundColor: Colors.transparent,
-                    isScrollControlled: true,
-                    builder: (context) => IdCardScannerModal(
-                      onLoginSuccess: widget.onLoginSuccess,
-                    ),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0x77DDB892), width: 1.4),
-                  backgroundColor: const Color(0x4D2A1C14),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                icon: const Icon(Icons.qr_code_scanner, color: AppColors.beige, size: 20),
-                label: const Text(
-                  'Scan College ID Card (Barcode / QR)',
-                  style: TextStyle(
-                    color: AppColors.ivory,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: authProvider.isLoading ? null : _handlePasswordLogin,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0x66DDB892)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.login, size: 16, color: AppColors.beige),
+                  label: const Text(
+                    'Authenticate with Password',
+                    style: TextStyle(color: AppColors.ivory, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
-              ),
+              ],
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
 
-              // Note
-              const Center(
+              // Informational footnote
+              Center(
                 child: Text(
-                  'No account creation needed. Your profile is automatically verified from GL Bajaj student records.',
+                  'Name, photo, and semester will automatically sync from college SIM records upon scan.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 11,
+                    color: AppColors.textMuted.withOpacity(0.8),
+                    fontSize: 10.5,
                     height: 1.3,
                   ),
                 ),
@@ -359,15 +424,15 @@ class _SimLoginCardState extends State<SimLoginCard> {
     );
   }
 
-  Widget _buildDemoChip(String label, String id) {
-    final isSelected = _identifierController.text == id;
+  Widget _buildDemoChip(String label, String adm, String email) {
+    final isSelected = _admissionController.text.trim().toUpperCase() == adm;
     return GestureDetector(
-      onTap: () => _fillDemo(id, 'simpass123'),
+      onTap: () => _fillDemo(adm, email, 'simpass123'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.caramel.withOpacity(0.35) : const Color(0x661F140D),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? AppColors.beige : const Color(0x33DDB892),
           ),

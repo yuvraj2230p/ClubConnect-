@@ -50,11 +50,19 @@ class StudentProfileScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.school, color: AppColors.beige, size: 24),
-                          SizedBox(width: 8),
-                          Column(
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.asset(
+                              'assets/images/glb_logo.jpg',
+                              width: 34,
+                              height: 34,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
@@ -101,14 +109,32 @@ class StudentProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Avatar & Student Name
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: AppColors.primaryLight,
-                    backgroundImage: user?.avatarUrl.isNotEmpty == true ? NetworkImage(user!.avatarUrl) : null,
-                    child: user?.avatarUrl.isEmpty == true
-                        ? Text(user!.fullName[0], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white))
-                        : null,
+                  // Avatar & Student Name with Camera Badge
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      CircleAvatar(
+                        radius: 38,
+                        backgroundColor: AppColors.caramel,
+                        backgroundImage: const AssetImage('assets/images/yuvraj_avatar.jpg'),
+                        foregroundImage: (user?.avatarUrl.isNotEmpty == true && user!.avatarUrl.startsWith('http'))
+                            ? NetworkImage(user!.avatarUrl)
+                            : null,
+                        onBackgroundImageError: (exception, stackTrace) {},
+                        onForegroundImageError: (exception, stackTrace) {},
+                      ),
+                      GestureDetector(
+                        onTap: () => _showIdCardPhotoExtractionSheet(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: const BoxDecoration(
+                            color: AppColors.caramel,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.camera_alt, color: AppColors.espressoDark, size: 14),
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 12),
@@ -140,6 +166,53 @@ class StudentProfileScreen extends StatelessWidget {
                       _buildIdDetail('BRANCH', user?.department ?? 'Engineering'),
                       _buildIdDetail('YEAR & SEC', '${user?.year ?? '3rd'} (${user?.section ?? 'A'})'),
                     ],
+                  ),
+
+                  const SizedBox(height: 16),
+                  const Divider(color: AppColors.surfaceBorder, height: 1),
+                  const SizedBox(height: 14),
+
+                  // Scan Real ID Card to Extract Photo
+                  InkWell(
+                    onTap: () => _showIdCardPhotoExtractionSheet(context),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.caramel.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.caramel.withOpacity(0.35)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.caramel.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.face_retouching_natural, color: AppColors.caramel, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Extract Photo from Real ID Card',
+                                  style: TextStyle(color: AppColors.ivory, fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  'Decodes barcode & crops student portrait',
+                                  style: TextStyle(color: AppColors.softBeige, fontSize: 10.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right, color: AppColors.caramel, size: 18),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -210,6 +283,228 @@ class StudentProfileScreen extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
           onTap: onTap,
         ),
+      ),
+    );
+  }
+
+  void _showIdCardPhotoExtractionSheet(BuildContext context) {
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.currentUser;
+    bool isProcessing = false;
+    String? statusMsg;
+    String? extractedAvatarUrl;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceCard,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                top: BorderSide(color: AppColors.caramel, width: 2),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.caramel.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.badge, color: AppColors.caramel, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'College ID Card Photo Scanner',
+                            style: TextStyle(
+                              color: AppColors.ivory,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'GL Bajaj Institute of Technology & Management',
+                            style: TextStyle(color: AppColors.softBeige, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Card Preview Frame
+                Container(
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.caramel.withOpacity(0.4)),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/yuvraj_card_front.jpg',
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Center(
+                          child: Icon(Icons.credit_card, color: AppColors.caramel, size: 48),
+                        ),
+                      ),
+                      // Face bounding crop highlight
+                      Positioned(
+                        top: 25,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.greenAccent, width: 2),
+                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.greenAccent.withOpacity(0.15),
+                          ),
+                          child: const Align(
+                            alignment: Alignment.topRight,
+                            child: Padding(
+                              padding: EdgeInsets.all(2.0),
+                              child: Text('PORTRAIT', style: TextStyle(color: Colors.greenAccent, fontSize: 7, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Barcode bounding highlight
+                      Positioned(
+                        bottom: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.75),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.caramel, width: 1),
+                          ),
+                          child: const Text(
+                            'BARCODE: 25116CN451 (Code 128)',
+                            style: TextStyle(color: AppColors.beige, fontSize: 9, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                if (statusMsg != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0x334E9F3D),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.greenAccent, width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        if (extractedAvatarUrl != null)
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundImage: NetworkImage('http://127.0.0.1:8000$extractedAvatarUrl'),
+                            backgroundColor: AppColors.caramel,
+                          )
+                        else
+                          const Icon(Icons.check_circle, color: Colors.greenAccent, size: 24),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            statusMsg!,
+                            style: const TextStyle(color: AppColors.ivory, fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Action Buttons
+                ElevatedButton.icon(
+                  onPressed: isProcessing
+                      ? null
+                      : () async {
+                          setModalState(() {
+                            isProcessing = true;
+                            statusMsg = 'Scanning barcode and cropping student portrait...';
+                          });
+
+                          final res = await authProvider.extractPhotoFromIdCard(
+                            sampleCard: true,
+                            admissionNumber: user?.admissionNumber,
+                          );
+
+                          if (res != null) {
+                            setModalState(() {
+                              isProcessing = false;
+                              extractedAvatarUrl = res['avatar_url'];
+                              statusMsg = '✓ Extracted photo & Code 128 (${res['admission_number']})! Profile updated in database.';
+                            });
+                          } else {
+                            setModalState(() {
+                              isProcessing = false;
+                              statusMsg = 'Failed: ${authProvider.errorMessage ?? "Could not crop photo"}';
+                            });
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.caramel,
+                    foregroundColor: AppColors.espressoDark,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  icon: isProcessing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.espressoDark),
+                        )
+                      : const Icon(Icons.auto_fix_high, size: 20),
+                  label: Text(
+                    isProcessing ? 'Processing ID Card...' : 'Scan ID Card & Update Photo Now',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

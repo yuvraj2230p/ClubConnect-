@@ -40,13 +40,22 @@ class EventModel {
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
+    String banner = json['banner_url'] ?? '';
+    if (banner.startsWith('/static/')) {
+      banner = 'http://127.0.0.1:8000$banner';
+    }
+    String logo = json['club_logo'] ?? '';
+    if (logo.startsWith('/static/')) {
+      logo = 'http://127.0.0.1:8000$logo';
+    }
+
     return EventModel(
       id: json['id'] ?? 0,
       title: json['title'] ?? '',
       slug: json['slug'] ?? '',
       description: json['description'] ?? '',
       category: json['category'] ?? 'hackathon',
-      bannerUrl: json['banner_url'] ?? '',
+      bannerUrl: banner,
       venue: json['venue'] ?? 'GL Bajaj Campus',
       startTime: DateTime.tryParse(json['start_time'] ?? '') ?? DateTime.now(),
       endTime: DateTime.tryParse(json['end_time'] ?? '') ?? DateTime.now(),
@@ -56,7 +65,7 @@ class EventModel {
       maxSeats: json['max_seats'] ?? 100,
       tags: json['tags'] ?? '',
       clubName: json['club_name'] ?? '',
-      clubLogo: json['club_logo'] ?? '',
+      clubLogo: logo,
       registrationsCount: json['registrations_count'] ?? 0,
       isRegistered: json['is_registered'] ?? false,
     );

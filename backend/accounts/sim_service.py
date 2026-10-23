@@ -5,12 +5,29 @@ from .models import User
 
 # Simulated GL Bajaj SIM Database Records for immediate out-of-the-box demo
 DEMO_SIM_RECORDS = {
+    "25116CN451": {
+        "admission_number": "25116CN451",
+        "email": "25116cn451@glbitm.ac.in",
+        "full_name": "YUVRAJ",
+        "department": "Computer Science & Information Technology (CSIT)",
+        "year": "1st Year",
+        "semester": "2nd Semester",
+        "section": "CSIT-A",
+        "roll_number": "25116CN451",
+        "role": "student",
+        "avatar_url": "http://127.0.0.1:8000/static/images/yuvraj_avatar.jpg",
+        "batch": "2025-29",
+        "blood_group": "B+",
+        "father_name": "Dwarika Prasad",
+        "mother_name": "Kamla Devi",
+    },
     "GLB22CSE101": {
         "admission_number": "GLB22CSE101",
-        "email": "yuvraj.cse22@glbitm.ac.in",
+        "email": "glb22cse101@glbitm.ac.in",
         "full_name": "Yuvraj Sharma",
         "department": "Computer Science & Engineering",
         "year": "3rd Year",
+        "semester": "6th Semester",
         "section": "CSE-B",
         "roll_number": "2201920100101",
         "role": "student",
@@ -18,10 +35,11 @@ DEMO_SIM_RECORDS = {
     },
     "GLB21IT045": {
         "admission_number": "GLB21IT045",
-        "email": "ananya.it21@glbitm.ac.in",
+        "email": "glb21it045@glbitm.ac.in",
         "full_name": "Ananya Verma",
         "department": "Information Technology",
         "year": "4th Year",
+        "semester": "8th Semester",
         "section": "IT-A",
         "roll_number": "2101920130045",
         "role": "club_lead",
@@ -29,10 +47,11 @@ DEMO_SIM_RECORDS = {
     },
     "GLB23AIML022": {
         "admission_number": "GLB23AIML022",
-        "email": "rohan.aiml23@glbitm.ac.in",
+        "email": "glb23aiml022@glbitm.ac.in",
         "full_name": "Rohan Mehta",
         "department": "Artificial Intelligence & Machine Learning",
         "year": "2nd Year",
+        "semester": "4th Semester",
         "section": "AIML-1",
         "roll_number": "2301920150022",
         "role": "student",
@@ -66,6 +85,82 @@ class SIMAuthService:
         return cls._authenticate_simulated(identifier_clean, password)
 
     @classmethod
+    def extract_admission_number_from_qr(cls, code_data: str) -> str:
+        import json, re
+        code_str = code_data.strip()
+
+        # 1. Check if JSON payload inside QR code
+        try:
+            parsed = json.loads(code_str)
+            if isinstance(parsed, dict):
+                identifier = (
+                    parsed.get('admission_number') or 
+                    parsed.get('admission_no') or 
+                    parsed.get('admissionNo') or
+                    parsed.get('adm_no') or
+                    parsed.get('roll_number') or 
+                    parsed.get('roll_no') or 
+                    parsed.get('rollno') or 
+                    parsed.get('rollNumber') or 
+                    parsed.get('enrollment_no') or
+                    parsed.get('student_id') or
+                    parsed.get('adm') or 
+                    parsed.get('id')
+                )
+                if identifier:
+                    return str(identifier).strip().upper()
+        except Exception:
+            pass
+
+        # 2. Check if URL with query param e.g. ?id= or ?adm=
+        if 'http://' in code_str or 'https://' in code_str:
+            match = re.search(r'[?&](?:id|adm|admission|roll)=([A-Za-z0-9_-]+)', code_str)
+            if match:
+                return match.group(1).strip().upper()
+
+        # 3. Strip common barcode framing characters e.g. *GLB22CSE101* or GLBITM:GLB22CSE101
+        cleaned = re.sub(r'^[*#:]+|[*#:]+$', '', code_str)
+        if ':' in cleaned:
+            cleaned = cleaned.split(':')[-1]
+        if '/' in cleaned:
+            cleaned = cleaned.split('/')[-1]
+
+        return cleaned.strip().upper()
+
+    @classmethod
+    def verify_with_qr_crosscheck(cls, entered_adm: str, entered_email: str, qr_data: str):
+        import re
+        entered_adm_clean = entered_adm.strip().upper()
+        entered_email_clean = entered_email.strip().lower()
+
+        # Rule 1: Email domain must be glbitm.ac.in
+        if not entered_email_clean.endswith('@glbitm.ac.in'):
+            return None, "College email must end with official domain @glbitm.ac.in"
+
+        # Rule 2: Email prefix starts with or contains admission number
+        email_prefix = entered_email_clean.split('@')[0]
+        norm_adm = re.sub(r'[^A-Za-z0-9]', '', entered_adm_clean).lower()
+        norm_prefix = re.sub(r'[^A-Za-z0-9]', '', email_prefix).lower()
+        if not (norm_prefix.startswith(norm_adm) or norm_adm in norm_prefix or norm_prefix in norm_adm):
+            return None, f"College email prefix ({email_prefix}) must match your Admission Number ({entered_adm_clean})."
+
+        # Rule 3: Cross-check QR code admission number with entered admission number
+        scanned_adm = cls.extract_admission_number_from_qr(qr_data)
+        norm_scanned = re.sub(r'[^A-Za-z0-9]', '', scanned_adm).upper()
+        norm_entered = re.sub(r'[^A-Za-z0-9]', '', entered_adm_clean).upper()
+
+        if norm_scanned != norm_entered:
+            return None, f"ID Card Verification Failed: Scanned card belongs to ID [{scanned_adm}], but you entered [{entered_adm_clean}]. Please scan your own physical ID card."
+
+        # Rule 4: Retrieve student from SIM with Name, Photo, Semester & Academic details
+        user = cls.authenticate_sim(entered_adm_clean, password="id_card_scanned_token")
+        if user:
+            user.email = entered_email_clean
+            user.save()
+
+        return user, None
+
+    @classmethod
     def authenticate_id_card_scan(cls, code_data: str):
         """
         Extracts Admission Number or Roll Number from physical GL Bajaj ID card barcode or QR code.
@@ -76,33 +171,7 @@ class SIMAuthService:
         - QR Code JSON: {"admission_number": "GLB22CSE101", ...}
         - QR URL: "https://glbitm.ac.in/student/verify?id=GLB22CSE101"
         """
-        import json, re
-        code_str = code_data.strip()
-
-        # 1. Check if JSON payload inside QR code
-        try:
-            parsed = json.loads(code_str)
-            if isinstance(parsed, dict):
-                identifier = parsed.get('admission_number') or parsed.get('roll_number') or parsed.get('email')
-                if identifier:
-                    return cls.authenticate_sim(str(identifier), password="id_card_scanned_token")
-        except Exception:
-            pass
-
-        # 2. Check if URL with query param e.g. ?id= or ?adm=
-        if 'http://' in code_str or 'https://' in code_str:
-            match = re.search(r'[?&](?:id|adm|admission|roll)=([A-Za-z0-9_-]+)', code_str)
-            if match:
-                identifier = match.group(1)
-                return cls.authenticate_sim(identifier, password="id_card_scanned_token")
-
-        # 3. Strip common barcode framing characters e.g. *GLB22CSE101* or GLBITM:GLB22CSE101
-        cleaned = re.sub(r'^[*#:]+|[*#:]+$', '', code_str)
-        if ':' in cleaned:
-            cleaned = cleaned.split(':')[-1]
-        if '/' in cleaned:
-            cleaned = cleaned.split('/')[-1]
-
+        cleaned = cls.extract_admission_number_from_qr(code_data)
         return cls.authenticate_sim(cleaned, password="id_card_scanned_token")
 
     @classmethod
@@ -171,6 +240,7 @@ class SIMAuthService:
                 'full_name': data.get('full_name', adm),
                 'department': data.get('department', 'Engineering'),
                 'year': data.get('year', '1st Year'),
+                'semester': data.get('semester', '5th Semester'),
                 'section': data.get('section', 'A'),
                 'roll_number': data.get('roll_number', adm),
                 'role': data.get('role', 'student'),
@@ -184,8 +254,29 @@ class SIMAuthService:
             user.full_name = data.get('full_name', user.full_name)
             user.department = data.get('department', user.department)
             user.year = data.get('year', user.year)
+            user.semester = data.get('semester', user.semester)
+            user.section = data.get('section', user.section)
+            user.roll_number = data.get('roll_number', user.roll_number)
+            if data.get('avatar_url'):
+                user.avatar_url = data.get('avatar_url')
             user.is_sim_verified = True
             user.save()
+
+        # If this is Yuvraj / 25116CN451 and card image exists, ensure photo is extracted from physical ID card
+        if adm == "25116CN451":
+            import os
+            from .id_card_photo_service import IDCardPhotoService
+            card_img = os.path.join(settings.BASE_DIR, 'static', 'images', 'yuvraj_card_front.jpg')
+            if os.path.exists(card_img):
+                try:
+                    IDCardPhotoService.process_id_card_and_update_profile(
+                        image_input=card_img,
+                        user=user,
+                        fallback_adm=adm
+                    )
+                    user.refresh_from_db()
+                except Exception as e:
+                    pass
 
         return user
 

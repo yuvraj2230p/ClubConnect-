@@ -1,13 +1,22 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/auth_provider.dart';
+import 'web_cam_bridge.dart';
 
 class IdCardScannerModal extends StatefulWidget {
   final VoidCallback onLoginSuccess;
+  final String initialAdmissionNumber;
+  final String initialEmail;
 
-  const IdCardScannerModal({super.key, required this.onLoginSuccess});
+  const IdCardScannerModal({
+    super.key,
+    required this.onLoginSuccess,
+    this.initialAdmissionNumber = '25116CN451',
+    this.initialEmail = '25116cn451@glbitm.ac.in',
+  });
 
   @override
   State<IdCardScannerModal> createState() => _IdCardScannerModalState();
@@ -15,51 +24,105 @@ class IdCardScannerModal extends StatefulWidget {
 
 class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTickerProviderStateMixin {
   late AnimationController _laserController;
-  final TextEditingController _customCodeController = TextEditingController(text: '*GLB22CSE101*');
-  bool _isQrMode = false;
+  late TextEditingController _customCodeController;
+  bool _isQrMode = true; // Default to QR code on front
   String _activePreset = 'Yuvraj (CSE)';
+  bool _isVerified = false;
 
   @override
   void initState() {
     super.initState();
     _laserController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+
+    // Initial code matching the entered admission number
+    _customCodeController = TextEditingController(
+      text: _isQrMode
+          ? 'https://glbg.servergi.com:8072/SIMWEBGLB/hostel/vh?id=${widget.initialAdmissionNumber}'
+          : widget.initialAdmissionNumber,
+    );
+
+    // Listen to real camera scan events from the browser
+    listenForCardScan((scannedCode) {
+      if (mounted) {
+        setState(() {
+          _customCodeController.text = scannedCode;
+        });
+        _scanCode(scannedCode);
+      }
+    });
   }
 
   @override
   void dispose() {
+    stopListeningForCardScan();
+    stopRealWebcamScan();
     _laserController.dispose();
     _customCodeController.dispose();
     super.dispose();
   }
 
+  void _onToggleMode(bool qr) {
+    setState(() {
+      _isQrMode = qr;
+      final adm = widget.initialAdmissionNumber.trim().isNotEmpty
+          ? widget.initialAdmissionNumber.trim()
+          : '25116CN451';
+      if (_isQrMode) {
+        _customCodeController.text = 'https://glbg.servergi.com:8072/SIMWEBGLB/hostel/vh?id=$adm';
+      } else {
+        _customCodeController.text = adm;
+      }
+    });
+  }
+
   void _scanCode(String code) async {
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.loginWithIdCardScan(code);
+    final adm = widget.initialAdmissionNumber.trim();
+    final email = widget.initialEmail.trim();
+
+    bool success;
+    if (adm.isNotEmpty && email.isNotEmpty) {
+      // 2-Step Anti-Spoofing Cross-Check
+      success = await authProvider.verifyAndLoginWithIdCard(
+        admissionNumber: adm,
+        collegeEmail: email,
+        qrCodeData: code,
+      );
+    } else {
+      // Direct Barcode/QR Scan
+      success = await authProvider.loginWithIdCardScan(code);
+    }
+
     if (success && mounted) {
-      Navigator.pop(context); // Close modal
-      widget.onLoginSuccess();
+      setState(() => _isVerified = true);
+      await Future.delayed(const Duration(milliseconds: 900));
+      if (mounted) {
+        Navigator.pop(context); // Close modal
+        widget.onLoginSuccess();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final verifiedUser = authProvider.currentUser;
 
     return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+      filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
-          color: const Color(0xF21C130D), // 95% opacity warm dark mocha
+          color: const Color(0xF71C130D), // 97% opacity warm dark mocha
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           border: Border.all(color: const Color(0x66DDB892), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.6),
-              blurRadius: 30,
+              color: Colors.black.withOpacity(0.65),
+              blurRadius: 32,
               offset: const Offset(0, -10),
             ),
           ],
@@ -72,7 +135,7 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
               Container(
                 width: 44,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
                   color: AppColors.beige.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(2),
@@ -86,19 +149,31 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
-                          color: AppColors.caramel.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.beige.withOpacity(0.3)),
+                          border: Border.all(color: AppColors.beige.withOpacity(0.4), width: 1.2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.caramel.withOpacity(0.2),
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.qr_code_scanner, color: AppColors.beige, size: 22),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset(
+                            'assets/images/glb_logo.jpg',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'College ID Card Scanner',
                             style: TextStyle(
                               color: AppColors.ivory,
@@ -106,12 +181,25 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                               fontSize: 16,
                             ),
                           ),
-                          Text(
-                            'Scan Barcode or QR Code to Auto-Login',
-                            style: TextStyle(
-                              color: AppColors.softBeige,
-                              fontSize: 11,
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.accentCyan,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Mobile & Desktop Camera Active',
+                                style: TextStyle(
+                                  color: AppColors.softBeige,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -124,57 +212,105 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+
+              // Cross-Check Context Banner
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.caramel.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.beige.withOpacity(0.25)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_user_outlined, color: AppColors.beige, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'ANTI-SPOOFING CROSS-CHECK',
+                            style: TextStyle(
+                              color: AppColors.beige,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          Text(
+                            'Entered ID: ${widget.initialAdmissionNumber} • ${widget.initialEmail}',
+                            style: const TextStyle(
+                              color: AppColors.ivory,
+                              fontSize: 11,
+                              fontFamily: 'Courier',
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // Real Webcam Launch Button
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.caramel.withOpacity(0.35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: () => startRealWebcamScan(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  icon: const Icon(Icons.videocam, color: AppColors.espressoDark, size: 20),
+                  label: const Text(
+                    'Scan With Real Webcam (Live)',
+                    style: TextStyle(
+                      color: AppColors.espressoDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
 
               // Barcode / QR Code Toggle
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: const Color(0x66140D08),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0x33DDB892)),
                 ),
                 child: Row(
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => setState(() => _isQrMode = false),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: !_isQrMode ? AppColors.caramel : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.line_weight_sharp,
-                                size: 16,
-                                color: !_isQrMode ? AppColors.espressoDark : AppColors.softBeige,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Barcode (Back)',
-                                style: TextStyle(
-                                  color: !_isQrMode ? AppColors.espressoDark : AppColors.softBeige,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _isQrMode = true),
+                        onTap: () => _onToggleMode(true),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
                             color: _isQrMode ? AppColors.caramel : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -198,167 +334,328 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Animated Laser Viewfinder matching GL Bajaj ID Card Frame
-              Container(
-                height: 170,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.beige.withOpacity(0.6), width: 1.5),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // ID Card Simulated Guide
-                      Positioned.fill(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _onToggleMode(false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: !_isQrMode ? AppColors.caramel : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              if (!_isQrMode) ...[
-                                // Barcode Graphic
-                                Icon(Icons.line_weight, size: 70, color: AppColors.beige.withOpacity(0.35)),
-                                const SizedBox(height: 6),
-                                Text(
-                                  _customCodeController.text,
-                                  style: TextStyle(
-                                    color: AppColors.beige.withOpacity(0.7),
-                                    fontFamily: 'Courier',
-                                    fontSize: 13,
-                                    letterSpacing: 2,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              Icon(
+                                Icons.line_weight_sharp,
+                                size: 16,
+                                color: !_isQrMode ? AppColors.espressoDark : AppColors.softBeige,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Barcode (Back)',
+                                style: TextStyle(
+                                  color: !_isQrMode ? AppColors.espressoDark : AppColors.softBeige,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ] else ...[
-                                // QR Code Graphic
-                                Icon(Icons.qr_code_2, size: 80, color: AppColors.beige.withOpacity(0.4)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'GL Bajaj Student QR',
-                                  style: TextStyle(
-                                    color: AppColors.beige.withOpacity(0.7),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ],
                           ),
                         ),
                       ),
-
-                      // Animated Laser Beam
-                      AnimatedBuilder(
-                        animation: _laserController,
-                        builder: (context, child) {
-                          return Positioned(
-                            top: 20 + (_laserController.value * 120),
-                            left: 20,
-                            right: 20,
-                            child: Container(
-                              height: 3,
-                              decoration: BoxDecoration(
-                                color: AppColors.accentCyan,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.accentCyan.withOpacity(0.8),
-                                    blurRadius: 10,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Corner Brackets
-                      Positioned(
-                        top: 10,
-                        left: 10,
-                        child: Container(width: 16, height: 16, decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.beige, width: 3), left: BorderSide(color: AppColors.beige, width: 3)))),
-                      ),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(width: 16, height: 16, decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.beige, width: 3), right: BorderSide(color: AppColors.beige, width: 3)))),
-                      ),
-                      Positioned(
-                        bottom: 10,
-                        left: 10,
-                        child: Container(width: 16, height: 16, decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.beige, width: 3), left: BorderSide(color: AppColors.beige, width: 3)))),
-                      ),
-                      Positioned(
-                        bottom: 10,
-                        right: 10,
-                        child: Container(width: 16, height: 16, decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.beige, width: 3), right: BorderSide(color: AppColors.beige, width: 3)))),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Quick Test ID Card Presets
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '⚡ Tap to simulate scanning physical GL Bajaj cards:',
-                  style: TextStyle(color: AppColors.softBeige.withOpacity(0.9), fontSize: 11),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              Row(
-                children: [
-                  _buildPresetChip('Yuvraj (CSE)', '*GLB22CSE101*'),
-                  const SizedBox(width: 8),
-                  _buildPresetChip('Ananya (IT)', '*GLB21IT045*'),
-                  const SizedBox(width: 8),
-                  _buildPresetChip('Rohan (AIML)', '*GLB23AIML022*'),
-                ],
               ),
 
               const SizedBox(height: 14),
 
-              // Code input (can type, paste, or scan)
+              // Animated Laser Viewfinder with GL Bajaj Physical ID Card
+              if (!_isVerified) ...[
+                Container(
+                  height: 190,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.caramel, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Real Physical College ID Card Image
+                        Image.asset(
+                          !_isQrMode
+                              ? 'assets/images/yuvraj_card_front.jpg'
+                              : 'assets/images/yuvraj_card_back.jpg',
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(Icons.credit_card, size: 64, color: AppColors.caramel),
+                          ),
+                        ),
+
+                        // Front Card: Green Portrait Crop Frame & Yellow Barcode Frame
+                        if (!_isQrMode) ...[
+                          Positioned(
+                            top: 20,
+                            child: Container(
+                              width: 90,
+                              height: 90,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.greenAccent, width: 2.2),
+                                borderRadius: BorderRadius.circular(10),
+                                color: Colors.greenAccent.withOpacity(0.18),
+                              ),
+                              child: const Align(
+                                alignment: Alignment.topRight,
+                                child: Padding(
+                                  padding: EdgeInsets.all(3.0),
+                                  child: Text(
+                                    'PORTRAIT',
+                                    style: TextStyle(
+                                      color: Colors.greenAccent,
+                                      fontSize: 7.5,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.85),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.amberAccent, width: 1.2),
+                              ),
+                              child: const Text(
+                                'CODE 128: 25116CN451',
+                                style: TextStyle(
+                                  color: Colors.amberAccent,
+                                  fontSize: 9.5,
+                                  fontFamily: 'Courier',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          Positioned(
+                            bottom: 12,
+                            left: 20,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.85),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.greenAccent, width: 1.2),
+                              ),
+                              child: const Text(
+                                'QR: id=25116CN451',
+                                style: TextStyle(
+                                  color: Colors.greenAccent,
+                                  fontSize: 9.5,
+                                  fontFamily: 'Courier',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        // Animated Laser Beam
+                        AnimatedBuilder(
+                          animation: _laserController,
+                          builder: (context, child) {
+                            return Positioned(
+                              top: 14 + (_laserController.value * 155),
+                              left: 10,
+                              right: 10,
+                              child: Container(
+                                height: 2.5,
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.redAccent.withOpacity(0.9),
+                                      blurRadius: 10,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+
+                        // Corner Brackets
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Container(width: 16, height: 16, decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.beige, width: 3), left: BorderSide(color: AppColors.beige, width: 3)))),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(width: 16, height: 16, decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.beige, width: 3), right: BorderSide(color: AppColors.beige, width: 3)))),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          child: Container(width: 16, height: 16, decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.beige, width: 3), left: BorderSide(color: AppColors.beige, width: 3)))),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          right: 8,
+                          child: Container(width: 16, height: 16, decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.beige, width: 3), right: BorderSide(color: AppColors.beige, width: 3)))),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ] else ...[
+                // Success Verification Confirmation Card
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0x334E9F3D),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.greenAccent, width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: AppColors.caramel,
+                        backgroundImage: const AssetImage('assets/images/yuvraj_avatar.jpg'),
+                        foregroundImage: (verifiedUser?.avatarUrl.isNotEmpty == true && verifiedUser!.avatarUrl.startsWith('http'))
+                            ? NetworkImage(verifiedUser!.avatarUrl)
+                            : null,
+                        onBackgroundImageError: (e, s) {},
+                        onForegroundImageError: (e, s) {},
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.check_circle, color: Colors.greenAccent, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  verifiedUser?.fullName ?? 'Verified Student',
+                                  style: const TextStyle(
+                                    color: AppColors.ivory,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              '${verifiedUser?.semester ?? "6th Semester"} • ${verifiedUser?.department ?? "Computer Science"}',
+                              style: const TextStyle(color: AppColors.beige, fontSize: 11),
+                            ),
+                            Text(
+                              verifiedUser?.admissionNumber ?? widget.initialAdmissionNumber,
+                              style: const TextStyle(
+                                color: AppColors.softBeige,
+                                fontSize: 10,
+                                fontFamily: 'Courier',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 14),
+
+              // Tap Card Preset
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '⚡ Tap to test scanning sample GL Bajaj physical cards:',
+                  style: TextStyle(color: AppColors.softBeige.withOpacity(0.9), fontSize: 11),
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              Row(
+                children: [
+                  _buildPresetChip('Yuvraj (25116CN451)', '25116CN451'),
+                  const SizedBox(width: 6),
+                  _buildPresetChip('Ananya (IT)', 'GLB21IT045'),
+                  const SizedBox(width: 6),
+                  _buildPresetChip('Rohan (AIML)', 'GLB23AIML022'),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Code Payload Box
               TextField(
                 controller: _customCodeController,
-                style: const TextStyle(color: AppColors.ivory, fontSize: 13, fontFamily: 'Courier'),
+                style: const TextStyle(color: AppColors.ivory, fontSize: 12, fontFamily: 'Courier'),
                 decoration: InputDecoration(
                   labelText: _isQrMode ? 'Scanned QR Payload' : 'Scanned Barcode Text',
                   hintText: 'e.g. *GLB22CSE101*',
-                  prefixIcon: Icon(_isQrMode ? Icons.qr_code : Icons.barcode_reader, color: AppColors.caramel, size: 20),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  prefixIcon: Icon(_isQrMode ? Icons.qr_code : Icons.barcode_reader, color: AppColors.caramel, size: 18),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
 
               if (authProvider.errorMessage != null) ...[
                 const SizedBox(height: 10),
-                Text(
-                  authProvider.errorMessage!,
-                  style: const TextStyle(color: AppColors.error, fontSize: 11),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.error.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          authProvider.errorMessage!,
+                          style: const TextStyle(color: AppColors.error, fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
 
               const SizedBox(height: 16),
 
-              // Confirm Scan & Login Button
+              // Confirm Scan & Cross-Check Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: authProvider.isLoading
+                  onPressed: authProvider.isLoading || _isVerified
                       ? null
                       : () => _scanCode(_customCodeController.text.trim()),
                   style: ElevatedButton.styleFrom(
@@ -373,10 +670,50 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                           width: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.espressoDark),
                         )
-                      : const Icon(Icons.flash_on, size: 18, color: AppColors.espressoDark),
+                      : const Icon(Icons.verified, size: 18, color: AppColors.espressoDark),
                   label: Text(
-                    authProvider.isLoading ? 'Verifying with College DB...' : 'Scan & Log In Instantly',
+                    authProvider.isLoading
+                        ? 'Cross-Checking Card & SIM DB...'
+                        : (_isVerified ? '✓ Identity Verified!' : 'Verify ID Card & Sign In'),
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Real ID Card Photo & Barcode Auto-Extraction Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: authProvider.isLoading || _isVerified
+                      ? null
+                      : () async {
+                          final res = await authProvider.extractPhotoFromIdCard(sampleCard: true);
+                          if (res != null && mounted) {
+                            setState(() {
+                              _isVerified = true;
+                              _customCodeController.text = res['barcode_value'] ?? '25116CN451';
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('ID Card Photo & Barcode extracted: ${res['admission_number']}'),
+                                backgroundColor: const Color(0xFF4E9F3D),
+                              ),
+                            );
+                            Future.delayed(const Duration(milliseconds: 1400), () {
+                              if (mounted) widget.onLoginSuccess();
+                            });
+                          }
+                        },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.caramel, width: 1.2),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  icon: const Icon(Icons.face_retouching_natural, color: AppColors.caramel, size: 18),
+                  label: const Text(
+                    '📸 Auto-Extract Photo from Physical Card',
+                    style: TextStyle(color: AppColors.ivory, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -388,21 +725,25 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
     );
   }
 
-  Widget _buildPresetChip(String label, String code) {
+  Widget _buildPresetChip(String label, String adm) {
     final isSelected = _activePreset == label;
     return Expanded(
       child: GestureDetector(
         onTap: () {
           setState(() {
             _activePreset = label;
-            _customCodeController.text = code;
+            if (_isQrMode) {
+              _customCodeController.text = 'https://glbg.servergi.com:8072/SIMWEBGLB/hostel/vh?id=$adm';
+            } else {
+              _customCodeController.text = adm;
+            }
           });
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.caramel.withOpacity(0.3) : const Color(0x661F140D),
-            borderRadius: BorderRadius.circular(12),
+            color: isSelected ? AppColors.caramel.withOpacity(0.35) : const Color(0x661F140D),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isSelected ? AppColors.beige : const Color(0x33DDB892),
             ),
@@ -412,7 +753,7 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
             textAlign: TextAlign.center,
             style: TextStyle(
               color: isSelected ? AppColors.ivory : AppColors.softBeige,
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),

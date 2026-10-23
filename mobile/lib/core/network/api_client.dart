@@ -52,6 +52,27 @@ class ApiClient {
     return _processResponse(response);
   }
 
+  static Future<dynamic> patch(String endpoint, Map<String, dynamic> data) async {
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+    final headers = await _headers();
+    final response = await http.patch(
+      url,
+      headers: headers,
+      body: jsonEncode(data),
+    ).timeout(const Duration(seconds: 12));
+    return _processResponse(response);
+  }
+
+  static Future<dynamic> delete(String endpoint) async {
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+    final headers = await _headers();
+    final response = await http.delete(
+      url,
+      headers: headers,
+    ).timeout(const Duration(seconds: 12));
+    return _processResponse(response);
+  }
+
   static dynamic _processResponse(http.Response response) {
     final body = response.body.isNotEmpty ? jsonDecode(utf8.decode(response.bodyBytes)) : null;
     if (response.statusCode >= 200 && response.statusCode < 300) {

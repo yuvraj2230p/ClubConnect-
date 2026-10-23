@@ -6,9 +6,20 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'admission_number', 'email', 'full_name',
-            'department', 'year', 'section', 'roll_number',
+            'department', 'year', 'semester', 'section', 'roll_number',
             'role', 'avatar_url', 'is_sim_verified', 'sim_last_synced'
         ]
+
+class IDCardCrossCheckSerializer(serializers.Serializer):
+    admission_number = serializers.CharField(
+        help_text="Student College Admission Number (e.g. GLB22CSE101 or 2201920100101)"
+    )
+    college_email = serializers.EmailField(
+        help_text="Official College Gmail ID ending in @glbitm.ac.in"
+    )
+    qr_code_data = serializers.CharField(
+        help_text="Decoded Barcode or QR Code string from the physical ID card"
+    )
 
 class SIMLoginSerializer(serializers.Serializer):
     identifier = serializers.CharField(

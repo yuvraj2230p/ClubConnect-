@@ -45,6 +45,7 @@ class User(AbstractUser):
     # College Academic Details
     department = models.CharField(max_length=100, default='Computer Science & Engineering')
     year = models.CharField(max_length=20, default='3rd Year')
+    semester = models.CharField(max_length=20, default='5th Semester', blank=True)
     section = models.CharField(max_length=10, blank=True, default='A')
     roll_number = models.CharField(max_length=40, blank=True)
     

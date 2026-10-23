@@ -12,9 +12,7 @@ class ClubsDirectoryScreen extends StatelessWidget {
     {'id': 'all', 'label': 'All Clubs'},
     {'id': 'technical', 'label': '💻 Tech & Coding'},
     {'id': 'cultural', 'label': '🎭 Cultural & Arts'},
-    {'id': 'robotics', 'label': '🤖 Robotics & IoT'},
-    {'id': 'social', 'label': '🤝 Social Welfare'},
-    {'id': 'literary', 'label': '📸 Media & Literary'},
+    {'id': 'social', 'label': '🤝 Social & Leadership'},
   ];
 
   @override
@@ -33,8 +31,8 @@ class ClubsDirectoryScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {},
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () => clubsProvider.fetchClubs(),
           ),
         ],
       ),
@@ -84,7 +82,7 @@ class ClubsDirectoryScreen extends StatelessWidget {
                     : ListView.separated(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         itemCount: clubs.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 14),
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
                         itemBuilder: (context, index) {
                           final club = clubs[index];
                           return _buildClubCard(context, club);
@@ -97,6 +95,23 @@ class ClubsDirectoryScreen extends StatelessWidget {
   }
 
   Widget _buildClubCard(BuildContext context, ClubModel club) {
+    String bannerAsset = 'assets/images/campus/glb_academic.webp';
+    String logoAsset = 'assets/images/glb_logo.jpg';
+
+    if (club.slug.contains('codespace')) {
+      bannerAsset = 'assets/images/clubs/codespace_banner.jpg';
+      logoAsset = 'assets/images/clubs/codespace_logo.png';
+    } else if (club.slug.contains('shrinik')) {
+      bannerAsset = 'assets/images/clubs/shrinik_banner.jpg';
+      logoAsset = 'assets/images/clubs/shrinik_logo.png';
+    } else if (club.slug.contains('navrang')) {
+      bannerAsset = 'assets/images/clubs/navrang_banner.jpg';
+      logoAsset = 'assets/images/clubs/navrang_logo.png';
+    } else if (club.slug.contains('vividhata')) {
+      bannerAsset = 'assets/images/clubs/vividhata_banner.jpg';
+      logoAsset = 'assets/images/clubs/vividhata_logo.png';
+    }
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -114,23 +129,24 @@ class ClubsDirectoryScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Cover Image Stack
             SizedBox(
-              height: 120,
+              height: 130,
               width: double.infinity,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    club.coverImageUrl,
+                  Image.asset(
+                    bannerAsset,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceDark),
                   ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, AppColors.surfaceCard.withOpacity(0.9)],
+                        colors: [Colors.transparent, AppColors.surfaceCard.withOpacity(0.95)],
+                        stops: const [0.3, 1.0],
                       ),
                     ),
                   ),
@@ -140,51 +156,116 @@ class ClubsDirectoryScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.black54,
+                        color: Colors.black.withOpacity(0.65),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white24),
                       ),
                       child: Text(
-                        '${club.membersCount} Active Members',
+                        '${club.membersCount} Members',
                         style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.bgDark.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.accentGold.withOpacity(0.4)),
+                      ),
+                      child: Text(
+                        club.category.toUpperCase(),
+                        style: const TextStyle(color: AppColors.accentGold, fontSize: 9, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+
+            // Club Details Row with Logo Avatar
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: Text(
-                          club.name,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                          overflow: TextOverflow.ellipsis,
+                      // Club Logo
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.accentGold, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.4),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.asset(
+                          logoAsset,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                      if (club.isJoined)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.accentCyan.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Text('Joined', style: TextStyle(color: AppColors.accentCyan, fontSize: 10, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    club.name,
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (club.isJoined)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentCyan.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: AppColors.accentCyan.withOpacity(0.4)),
+                                    ),
+                                    child: const Text('Joined', style: TextStyle(color: AppColors.accentCyan, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  ),
+                              ],
+                            ),
+                            if (club.instagramHandle.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  club.instagramHandle,
+                                  style: const TextStyle(
+                                    color: Color(0xFFF43F5E),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 10),
                   Text(
                     club.tagline,
-                    style: const TextStyle(color: AppColors.accentGold, fontSize: 12, fontWeight: FontWeight.w500),
+                    style: const TextStyle(color: AppColors.accentGold, fontSize: 12, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     club.description,
                     maxLines: 2,

@@ -107,15 +107,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: CircleAvatar(
                           radius: 22,
                           backgroundColor: AppColors.primaryLight,
-                          backgroundImage: user?.avatarUrl.isNotEmpty == true
+                          backgroundImage: const AssetImage('assets/images/yuvraj_avatar.jpg'),
+                          foregroundImage: (user?.avatarUrl.isNotEmpty == true && user!.avatarUrl.startsWith('http'))
                               ? NetworkImage(user!.avatarUrl)
                               : null,
-                          child: user?.avatarUrl.isNotEmpty == true
-                              ? null
-                              : Text(
-                                  (user?.fullName.isNotEmpty == true) ? user!.fullName[0] : 'S',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
+                          onBackgroundImageError: (exception, stackTrace) {},
+                          onForegroundImageError: (exception, stackTrace) {},
                         ),
                       ),
                     ),
@@ -390,6 +387,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildClubMiniCard(dynamic club) {
+    String bannerAsset = 'assets/images/campus/glb_academic.webp';
+    if (club.slug.contains('codespace')) {
+      bannerAsset = 'assets/images/clubs/codespace_banner.jpg';
+    } else if (club.slug.contains('shrinik')) {
+      bannerAsset = 'assets/images/clubs/shrinik_banner.jpg';
+    } else if (club.slug.contains('navrang')) {
+      bannerAsset = 'assets/images/clubs/navrang_banner.jpg';
+    } else if (club.slug.contains('vividhata')) {
+      bannerAsset = 'assets/images/clubs/vividhata_banner.jpg';
+    }
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -398,7 +406,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       },
       child: Container(
-        width: 150,
+        width: 155,
         decoration: BoxDecoration(
           color: AppColors.surfaceCard,
           borderRadius: BorderRadius.circular(18),
@@ -411,11 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SizedBox(
               height: 80,
               width: double.infinity,
-              child: Image.network(
-                club.coverImageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: AppColors.surfaceDark),
-              ),
+              child: Image.asset(bannerAsset, fit: BoxFit.cover),
             ),
             Padding(
               padding: const EdgeInsets.all(10),
@@ -428,6 +432,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
+                  const SizedBox(height: 2),
+                  if (club.instagramHandle.isNotEmpty)
+                    Text(
+                      club.instagramHandle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xFFF43F5E), fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
                   const SizedBox(height: 3),
                   Text(
                     club.tagline,
