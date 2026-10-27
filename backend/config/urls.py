@@ -13,7 +13,11 @@ def cors_static_serve(request, path, document_root=None, show_indexes=False):
     return response
 
 def serve_flutter_web(request, path=''):
-    flutter_web_dir = settings.BASE_DIR.parent / 'mobile' / 'build' / 'web'
+    candidates = [
+        settings.BASE_DIR / 'flutter_web',
+        settings.BASE_DIR.parent / 'mobile' / 'build' / 'web',
+    ]
+    flutter_web_dir = next((c for c in candidates if c.is_dir() and (c / 'index.html').is_file()), candidates[0])
     clean_path = path.lstrip('/')
     if clean_path:
         requested_file = flutter_web_dir / clean_path

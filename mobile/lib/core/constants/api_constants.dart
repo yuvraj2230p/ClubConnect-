@@ -10,12 +10,18 @@ class ApiConstants {
       return envUrl;
     }
 
-    // 2. Default local development URLs
+    // 2. Default URLs
     if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api';
+      // In web browser, dynamically match the current origin (domain + port + protocol)
+      // e.g. https://comics-wallace-delivery-challenges.trycloudflare.com/api
+      final origin = Uri.base.origin;
+      if (origin.contains(':3000')) {
+        return 'http://127.0.0.1:8000/api';
+      }
+      return '$origin/api';
     } else if (Platform.isAndroid) {
-      // Android emulator loopback alias
-      return 'http://10.0.2.2:8000/api';
+      // Live Cloudflare tunnel endpoint for physical Android devices
+      return 'https://comics-wallace-delivery-challenges.trycloudflare.com/api';
     } else {
       // iOS Simulator or macOS desktop
       return 'http://127.0.0.1:8000/api';
@@ -45,4 +51,18 @@ class ApiConstants {
   static const String myTickets = '/events/my-tickets/';
   static String eventDetail(String slug) => '/events/$slug/';
   static String registerEvent(String slug) => '/events/$slug/register/';
+
+  // Resolve relative URLs to absolute based on active baseUrl
+  static String resolveUrl(String path) {
+    if (path.isEmpty) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    try {
+      final base = baseUrl;
+      final uri = Uri.parse(base);
+      final cleanPath = path.startsWith('/') ? path : '/$path';
+      return '${uri.scheme}://${uri.authority}$cleanPath';
+    } catch (_) {
+      return path;
+    }
+  }
 }

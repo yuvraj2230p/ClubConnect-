@@ -1,3 +1,5 @@
+import '../core/constants/api_constants.dart';
+
 class UserModel {
   final int id;
   final String admissionNumber;
@@ -29,8 +31,8 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     String avatar = json['avatar_url'] ?? '';
-    if (avatar.startsWith('/')) {
-      avatar = 'http://127.0.0.1:8000$avatar';
+    if (avatar.isNotEmpty) {
+      avatar = ApiConstants.resolveUrl(avatar);
     }
     return UserModel(
       id: json['id'] ?? 0,

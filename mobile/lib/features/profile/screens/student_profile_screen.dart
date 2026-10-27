@@ -411,9 +411,9 @@ class StudentProfileScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: AppColors.caramel, width: 1),
                           ),
-                          child: const Text(
-                            'BARCODE: 25116CN451 (Code 128)',
-                            style: TextStyle(color: AppColors.beige, fontSize: 9, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                          child: Text(
+                            'BARCODE: ${user?.admissionNumber ?? "GL BAJAJ ID"} (Code 128)',
+                            style: const TextStyle(color: AppColors.beige, fontSize: 9, fontFamily: 'Courier', fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),

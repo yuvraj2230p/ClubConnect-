@@ -196,7 +196,7 @@ class AuthProvider extends ChangeNotifier {
           _currentUser = UserModel.fromJson(response['user']);
         } else if (_currentUser != null && response['avatar_url'] != null) {
           _currentUser = _currentUser!.copyWith(
-            avatarUrl: 'http://127.0.0.1:8000${response['avatar_url']}',
+            avatarUrl: ApiConstants.resolveUrl(response['avatar_url']),
           );
         }
         _isLoading = false;

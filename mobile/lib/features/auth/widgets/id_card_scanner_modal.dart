@@ -14,8 +14,8 @@ class IdCardScannerModal extends StatefulWidget {
   const IdCardScannerModal({
     super.key,
     required this.onLoginSuccess,
-    this.initialAdmissionNumber = '25116CN451',
-    this.initialEmail = '25116cn451@glbitm.ac.in',
+    this.initialAdmissionNumber = '',
+    this.initialEmail = '',
   });
 
   @override
@@ -26,7 +26,6 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
   late AnimationController _laserController;
   late TextEditingController _customCodeController;
   bool _isQrMode = true; // Default to QR code on front
-  String _activePreset = 'Yuvraj (CSE)';
   bool _isVerified = false;
 
   @override
@@ -39,9 +38,11 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
 
     // Initial code matching the entered admission number
     _customCodeController = TextEditingController(
-      text: _isQrMode
-          ? 'https://glbg.servergi.com:8072/SIMWEBGLB/hostel/vh?id=${widget.initialAdmissionNumber}'
-          : widget.initialAdmissionNumber,
+      text: widget.initialAdmissionNumber.isNotEmpty
+          ? (_isQrMode
+              ? 'https://glbg.servergi.com:8072/SIMWEBGLB/hostel/vh?id=${widget.initialAdmissionNumber}'
+              : widget.initialAdmissionNumber)
+          : '',
     );
 
     // Listen to real camera scan events from the browser
@@ -51,6 +52,13 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
           _customCodeController.text = scannedCode;
         });
         _scanCode(scannedCode);
+      }
+    });
+
+    // Auto-launch camera scanner on modal open
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        startRealWebcamScan();
       }
     });
   }
@@ -67,18 +75,29 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
   void _onToggleMode(bool qr) {
     setState(() {
       _isQrMode = qr;
-      final adm = widget.initialAdmissionNumber.trim().isNotEmpty
-          ? widget.initialAdmissionNumber.trim()
-          : '25116CN451';
-      if (_isQrMode) {
-        _customCodeController.text = 'https://glbg.servergi.com:8072/SIMWEBGLB/hostel/vh?id=$adm';
-      } else {
-        _customCodeController.text = adm;
+      final adm = widget.initialAdmissionNumber.trim();
+      if (adm.isNotEmpty) {
+        if (_isQrMode) {
+          _customCodeController.text = 'https://glbg.servergi.com:8072/SIMWEBGLB/hostel/vh?id=$adm';
+        } else {
+          _customCodeController.text = adm;
+        }
       }
     });
   }
 
   void _scanCode(String code) async {
+    final cleanCode = code.trim();
+    if (cleanCode.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please align your ID card in front of camera or enter the scanned code.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     final authProvider = context.read<AuthProvider>();
     final adm = widget.initialAdmissionNumber.trim();
     final email = widget.initialEmail.trim();
@@ -89,11 +108,11 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
       success = await authProvider.verifyAndLoginWithIdCard(
         admissionNumber: adm,
         collegeEmail: email,
-        qrCodeData: code,
+        qrCodeData: cleanCode,
       );
     } else {
       // Direct Barcode/QR Scan
-      success = await authProvider.loginWithIdCardScan(code);
+      success = await authProvider.loginWithIdCardScan(cleanCode);
     }
 
     if (success && mounted) {
@@ -444,9 +463,11 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: Colors.amberAccent, width: 1.2),
                               ),
-                              child: const Text(
-                                'CODE 128: 25116CN451',
-                                style: TextStyle(
+                              child: Text(
+                                widget.initialAdmissionNumber.isNotEmpty
+                                    ? 'BARCODE: ${widget.initialAdmissionNumber}'
+                                    : 'ALIGN ID CARD BARCODE',
+                                style: const TextStyle(
                                   color: Colors.amberAccent,
                                   fontSize: 9.5,
                                   fontFamily: 'Courier',
@@ -466,9 +487,11 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: Colors.greenAccent, width: 1.2),
                               ),
-                              child: const Text(
-                                'QR: id=25116CN451',
-                                style: TextStyle(
+                              child: Text(
+                                widget.initialAdmissionNumber.isNotEmpty
+                                    ? 'QR: ${widget.initialAdmissionNumber}'
+                                    : 'ALIGN ID CARD QR CODE',
+                                style: const TextStyle(
                                   color: Colors.greenAccent,
                                   fontSize: 9.5,
                                   fontFamily: 'Courier',
@@ -591,28 +614,6 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
 
               const SizedBox(height: 14),
 
-              // Tap Card Preset
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '⚡ Tap to test scanning sample GL Bajaj physical cards:',
-                  style: TextStyle(color: AppColors.softBeige.withOpacity(0.9), fontSize: 11),
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              Row(
-                children: [
-                  _buildPresetChip('Yuvraj (25116CN451)', '25116CN451'),
-                  const SizedBox(width: 6),
-                  _buildPresetChip('Ananya (IT)', 'GLB21IT045'),
-                  const SizedBox(width: 6),
-                  _buildPresetChip('Rohan (AIML)', 'GLB23AIML022'),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
               // Code Payload Box
               TextField(
                 controller: _customCodeController,
@@ -679,83 +680,8 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-
-              // Real ID Card Photo & Barcode Auto-Extraction Button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: authProvider.isLoading || _isVerified
-                      ? null
-                      : () async {
-                          final res = await authProvider.extractPhotoFromIdCard(sampleCard: true);
-                          if (res != null && mounted) {
-                            setState(() {
-                              _isVerified = true;
-                              _customCodeController.text = res['barcode_value'] ?? '25116CN451';
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('ID Card Photo & Barcode extracted: ${res['admission_number']}'),
-                                backgroundColor: const Color(0xFF4E9F3D),
-                              ),
-                            );
-                            Future.delayed(const Duration(milliseconds: 1400), () {
-                              if (mounted) widget.onLoginSuccess();
-                            });
-                          }
-                        },
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.caramel, width: 1.2),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  icon: const Icon(Icons.face_retouching_natural, color: AppColors.caramel, size: 18),
-                  label: const Text(
-                    '📸 Auto-Extract Photo from Physical Card',
-                    style: TextStyle(color: AppColors.ivory, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPresetChip(String label, String adm) {
-    final isSelected = _activePreset == label;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _activePreset = label;
-            if (_isQrMode) {
-              _customCodeController.text = 'https://glbg.servergi.com:8072/SIMWEBGLB/hostel/vh?id=$adm';
-            } else {
-              _customCodeController.text = adm;
-            }
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.caramel.withOpacity(0.35) : const Color(0x661F140D),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isSelected ? AppColors.beige : const Color(0x33DDB892),
-            ),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? AppColors.ivory : AppColors.softBeige,
-              fontSize: 10.5,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
           ),
         ),
       ),

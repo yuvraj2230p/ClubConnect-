@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: club-connect
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: singapore # Closest to India for fast response times
+    envVars:
+      - key: PORT
+        value: 8000

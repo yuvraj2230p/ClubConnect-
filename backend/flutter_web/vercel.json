@@ -1,0 +1,21 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/club-connect.apk",
+      "destination": "/club-connect.apk"
+    },
+    {
+      "source": "/html5-qrcode.min.js",
+      "destination": "/html5-qrcode.min.js"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

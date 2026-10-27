@@ -31,6 +31,7 @@
 
   <title>club_connect</title>
   <link rel="manifest" href="manifest.json">
+  <script src="html5-qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <style>
@@ -53,12 +54,29 @@
       position: relative;
       width: 100%;
       max-width: 440px;
-      height: 320px;
+      min-height: 320px;
       background: #000;
       border: 2px solid #DDB892;
       border-radius: 24px;
       overflow: hidden;
       box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(184, 125, 75, 0.35);
+    }
+    #qr-reader {
+      width: 100% !important;
+      border: none !important;
+      background: #000 !important;
+    }
+    #qr-reader video {
+      width: 100% !important;
+      height: 320px !important;
+      object-fit: cover !important;
+      border-radius: 20px;
+    }
+    #qr-reader__scan_region {
+      background: transparent !important;
+    }
+    #qr-reader__dashboard {
+      display: none !important;
     }
     #scanner-laser {
       position: absolute;
@@ -69,6 +87,7 @@
       box-shadow: 0 0 16px #34d399;
       animation: sweepLaser 1.5s infinite alternate ease-in-out;
       z-index: 10;
+      pointer-events: none;
     }
     @keyframes sweepLaser {
       from { top: 20px; }
@@ -84,21 +103,21 @@
         <span style="font-size: 22px;">📷</span>
         <div>
           <div style="font-weight: 800; font-size: 15px; letter-spacing: 0.3px;">GL Bajaj Real ID Card Scanner</div>
-          <div style="font-size: 11px; color: #DDB892;">Hold your physical card (QR or Barcode) to the webcam</div>
+          <div style="font-size: 11px; color: #DDB892;">Point camera at your physical card (QR or Barcode)</div>
         </div>
       </div>
       <button onclick="stopRealCameraScan()" style="background: #2A1C14; border: 1px solid #432F23; color: #D4C7B8; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">✕</button>
     </div>
 
     <div id="camera-feed-box">
-      <video id="live-camera-video" style="width: 100%; height: 100%; object-fit: cover;" autoplay playsinline muted></video>
+      <div id="qr-reader"></div>
       <div id="scanner-laser"></div>
       
       <!-- Viewfinder Accents -->
-      <div style="position: absolute; top: 12px; left: 12px; width: 24px; height: 24px; border-top: 3px solid #DDB892; border-left: 3px solid #DDB892; z-index: 10;"></div>
-      <div style="position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-top: 3px solid #DDB892; border-right: 3px solid #DDB892; z-index: 10;"></div>
-      <div style="position: absolute; bottom: 12px; left: 12px; width: 24px; height: 24px; border-bottom: 3px solid #DDB892; border-left: 3px solid #DDB892; z-index: 10;"></div>
-      <div style="position: absolute; bottom: 12px; right: 12px; width: 24px; height: 24px; border-bottom: 3px solid #DDB892; border-right: 3px solid #DDB892; z-index: 10;"></div>
+      <div style="position: absolute; top: 12px; left: 12px; width: 24px; height: 24px; border-top: 3px solid #DDB892; border-left: 3px solid #DDB892; z-index: 10; pointer-events: none;"></div>
+      <div style="position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-top: 3px solid #DDB892; border-right: 3px solid #DDB892; z-index: 10; pointer-events: none;"></div>
+      <div style="position: absolute; bottom: 12px; left: 12px; width: 24px; height: 24px; border-bottom: 3px solid #DDB892; border-left: 3px solid #DDB892; z-index: 10; pointer-events: none;"></div>
+      <div style="position: absolute; bottom: 12px; right: 12px; width: 24px; height: 24px; border-bottom: 3px solid #DDB892; border-right: 3px solid #DDB892; z-index: 10; pointer-events: none;"></div>
     </div>
 
     <div style="margin-top: 14px; display: flex; gap: 10px; width: 100%; max-width: 440px;">
@@ -113,67 +132,100 @@
   </div>
 
   <script>
-    let activeCameraStream = null;
-    let cameraAnimationId = null;
-    let nativeBarcodeDetector = null;
-
-    if ('BarcodeDetector' in window) {
-      try {
-        nativeBarcodeDetector = new BarcodeDetector({
-          formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'upc_a', 'data_matrix']
-        });
-      } catch(e) {}
-    }
+    let html5QrScannerInstance = null;
+    let isCurrentlyScanning = false;
 
     window.startRealCameraScan = async function() {
       const modal = document.getElementById('real-camera-modal');
-      const video = document.getElementById('live-camera-video');
       const feedback = document.getElementById('scan-feedback');
-      feedback.style.display = 'none';
-      modal.style.display = 'flex';
+      if (feedback) feedback.style.display = 'none';
+      if (modal) modal.style.display = 'flex';
+
+      if (isCurrentlyScanning && html5QrScannerInstance) return;
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }
-        });
-        activeCameraStream = stream;
-        video.srcObject = stream;
-        await video.play();
+        if (typeof Html5Qrcode === 'undefined') {
+          console.error("Html5Qrcode not yet loaded");
+          alert("Scanner library is initializing, please wait a moment.");
+          return;
+        }
 
-        const detectLoop = async () => {
-          if (!activeCameraStream) return;
-          if (video.readyState === video.HAVE_ENOUGH_DATA && nativeBarcodeDetector) {
-            try {
-              const codes = await nativeBarcodeDetector.detect(video);
-              if (codes && codes.length > 0) {
-                onCardDecoded(codes[0].rawValue);
-                return;
-              }
-            } catch(e) {}
-          }
-          cameraAnimationId = requestAnimationFrame(detectLoop);
+        if (html5QrScannerInstance) {
+          try {
+            await html5QrScannerInstance.stop();
+            html5QrScannerInstance.clear();
+          } catch(e) {}
+        }
+
+        html5QrScannerInstance = new Html5Qrcode("qr-reader", {
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.DATA_MATRIX
+          ],
+          verbose: false
+        });
+
+        isCurrentlyScanning = true;
+
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+          if (!isCurrentlyScanning) return;
+          isCurrentlyScanning = false;
+          onCardDecoded(decodedText);
         };
-        cameraAnimationId = requestAnimationFrame(detectLoop);
-      } catch(err) {
-        alert("Camera permission denied or camera not found: " + err.message + "\nYou can use 'Upload Card Photo' to select a photo of your card.");
-        stopRealCameraScan();
+
+        const config = {
+          fps: 15,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const edge = Math.max(160, Math.floor(minEdge * 0.72));
+            return { width: edge, height: edge };
+          },
+          aspectRatio: 1.333333
+        };
+
+        try {
+          await html5QrScannerInstance.start(
+            { facingMode: "environment" },
+            config,
+            qrCodeSuccessCallback
+          );
+        } catch (envErr) {
+          console.warn("Back camera unavailable, attempting default camera:", envErr);
+          await html5QrScannerInstance.start(
+            { facingMode: "user" },
+            config,
+            qrCodeSuccessCallback
+          );
+        }
+      } catch (err) {
+        console.error("Camera start failed:", err);
+        isCurrentlyScanning = false;
+        alert("Camera could not be started: " + (err.message || err) + "\n\nYou can click '📁 Or Upload Card Photo' to select your ID card image.");
       }
     };
 
-    window.stopRealCameraScan = function() {
-      if (activeCameraStream) {
-        activeCameraStream.getTracks().forEach(t => t.stop());
-        activeCameraStream = null;
-      }
-      if (cameraAnimationId) {
-        cancelAnimationFrame(cameraAnimationId);
-        cameraAnimationId = null;
+    window.stopRealCameraScan = async function() {
+      isCurrentlyScanning = false;
+      if (html5QrScannerInstance) {
+        try {
+          await html5QrScannerInstance.stop();
+          html5QrScannerInstance.clear();
+        } catch(e) {
+          console.warn("Error stopping scanner:", e);
+        }
+        html5QrScannerInstance = null;
       }
       const modal = document.getElementById('real-camera-modal');
       if (modal) modal.style.display = 'none';
     };
 
     function onCardDecoded(codeStr) {
+      if (!codeStr || !codeStr.trim()) return;
+
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
@@ -183,42 +235,49 @@
         osc.stop(ctx.currentTime + 0.15);
       } catch(e) {}
 
-      document.getElementById('scan-feedback').style.display = 'block';
-      setTimeout(() => {
-        stopRealCameraScan();
-        window.dispatchEvent(new CustomEvent('card_scanned_event', { detail: codeStr }));
+      const feedback = document.getElementById('scan-feedback');
+      if (feedback) {
+        feedback.innerText = "✓ Scanned: " + codeStr.substring(0, 32) + "... Verifying!";
+        feedback.style.display = 'block';
+      }
+
+      setTimeout(async () => {
+        await window.stopRealCameraScan();
+        window.dispatchEvent(new CustomEvent('card_scanned_event', { detail: codeStr.trim() }));
       }, 500);
     }
 
-    function handleHtmlCardUpload(e) {
-      const file = e.target.files[0];
+    async function handleHtmlCardUpload(e) {
+      const file = e.target.files && e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const img = new Image();
-        img.onload = async function() {
-          if (nativeBarcodeDetector) {
-            try {
-              const codes = await nativeBarcodeDetector.detect(img);
-              if (codes && codes.length > 0) {
-                onCardDecoded(codes[0].rawValue);
-                return;
-              }
-            } catch(err) {}
-          }
-          if (window.Html5Qrcode) {
-            try {
-              const html5Qr = new Html5Qrcode("camera-feed-box");
-              const decoded = await html5Qr.scanFile(file, true);
-              onCardDecoded(decoded);
-              return;
-            } catch(err) {}
-          }
-          alert("Could not detect barcode or QR code in photo. Please ensure it is sharp.");
-        };
-        img.src = evt.target.result;
-      };
-      reader.readAsDataURL(file);
+
+      try {
+        if (typeof Html5Qrcode === 'undefined') {
+          alert("Scanner library is initializing, please try again in 2 seconds.");
+          return;
+        }
+
+        const uploader = new Html5Qrcode("qr-reader", {
+          formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.UPC_A
+          ]
+        });
+
+        const decoded = await uploader.scanFile(file, true);
+        uploader.clear();
+
+        if (decoded) {
+          onCardDecoded(decoded);
+          return;
+        }
+      } catch (err) {
+        console.warn("Html5Qrcode scanFile error:", err);
+        alert("Could not detect barcode or QR code in photo. Please ensure the code is clearly focused and well-lit.");
+      }
     }
   </script>
 </head>

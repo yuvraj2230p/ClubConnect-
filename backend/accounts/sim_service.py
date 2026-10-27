@@ -15,7 +15,7 @@ DEMO_SIM_RECORDS = {
         "section": "CSIT-A",
         "roll_number": "25116CN451",
         "role": "student",
-        "avatar_url": "http://127.0.0.1:8000/static/images/yuvraj_avatar.jpg",
+        "avatar_url": "/static/images/yuvraj_avatar.jpg",
         "batch": "2025-29",
         "blood_group": "B+",
         "father_name": "Dwarika Prasad",
@@ -113,12 +113,21 @@ class SIMAuthService:
             pass
 
         # 2. Check if URL with query param e.g. ?id= or ?adm=
-        if 'http://' in code_str or 'https://' in code_str:
-            match = re.search(r'[?&](?:id|adm|admission|roll)=([A-Za-z0-9_-]+)', code_str)
-            if match:
-                return match.group(1).strip().upper()
+        match = re.search(r'[?&](?:id|adm|admission|roll|student|uid)=([A-Za-z0-9_-]+)', code_str, re.IGNORECASE)
+        if match:
+            return match.group(1).strip().upper()
 
-        # 3. Strip common barcode framing characters e.g. *GLB22CSE101* or GLBITM:GLB22CSE101
+        # 3. Check for labeled pattern e.g. "Admission No: 25116CN451" or "Roll: 2201920100101"
+        match_label = re.search(r'(?:adm(?:ission)?|roll|enrollment)(?:\s+)?(?:no|num|number)?\s*[:=-]\s*([A-Za-z0-9_-]+)', code_str, re.IGNORECASE)
+        if match_label:
+            return match_label.group(1).strip().upper()
+
+        # 4. Check for standard college admission/roll number token
+        match_token = re.search(r'\b(GLB[0-9A-Za-z]{6,10}|[0-9]{2}[0-9A-Za-z]{6,14})\b', code_str, re.IGNORECASE)
+        if match_token:
+            return match_token.group(1).strip().upper()
+
+        # 5. Strip common barcode framing characters e.g. *GLB22CSE101* or GLBITM:GLB22CSE101
         cleaned = re.sub(r'^[*#:]+|[*#:]+$', '', code_str)
         if ':' in cleaned:
             cleaned = cleaned.split(':')[-1]
@@ -150,7 +159,18 @@ class SIMAuthService:
         norm_entered = re.sub(r'[^A-Za-z0-9]', '', entered_adm_clean).upper()
 
         if norm_scanned != norm_entered:
-            return None, f"ID Card Verification Failed: Scanned card belongs to ID [{scanned_adm}], but you entered [{entered_adm_clean}]. Please scan your own physical ID card."
+            # Tolerant match: check if one contains the other (e.g. GLB25116CN451 vs 25116CN451)
+            if not (norm_scanned in norm_entered or norm_entered in norm_scanned):
+                # Check if both reference the same student record (e.g. roll number vs admission number)
+                user_check = cls.authenticate_sim(entered_adm_clean, password="id_card_scanned_token")
+                matched = False
+                if user_check:
+                    user_roll = re.sub(r'[^A-Za-z0-9]', '', str(user_check.roll_number or '')).upper()
+                    user_adm = re.sub(r'[^A-Za-z0-9]', '', str(user_check.admission_number or '')).upper()
+                    if norm_scanned == user_roll or norm_scanned == user_adm:
+                        matched = True
+                if not matched:
+                    return None, f"ID Card Verification Failed: Scanned card belongs to ID [{scanned_adm}], but you entered [{entered_adm_clean}]. Please scan your own physical ID card."
 
         # Rule 4: Retrieve student from SIM with Name, Photo, Semester & Academic details
         user = cls.authenticate_sim(entered_adm_clean, password="id_card_scanned_token")

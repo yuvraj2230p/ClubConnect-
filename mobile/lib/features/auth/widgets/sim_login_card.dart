@@ -15,9 +15,9 @@ class SimLoginCard extends StatefulWidget {
 }
 
 class _SimLoginCardState extends State<SimLoginCard> {
-  final _admissionController = TextEditingController(text: '25116CN451');
-  final _emailController = TextEditingController(text: '25116cn451@glbitm.ac.in');
-  final _passwordController = TextEditingController(text: 'simpass123');
+  final _admissionController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _showPasswordLogin = false; // By default prioritize physical ID card scan
 
@@ -47,24 +47,11 @@ class _SimLoginCardState extends State<SimLoginCard> {
     }
   }
 
-  void _fillDemo(String adm, String email, String pass) {
-    setState(() {
-      _admissionController.text = adm;
-      _emailController.text = email;
-      _passwordController.text = pass;
-    });
-  }
-
   void _openIdScanner() {
     final adm = _admissionController.text.trim();
     final email = _emailController.text.trim();
 
-    if (adm.isEmpty) {
-      _showWarning('Please enter your GL Bajaj Admission Number.');
-      return;
-    }
-
-    if (!email.toLowerCase().endsWith('@glbitm.ac.in')) {
+    if (email.isNotEmpty && !email.toLowerCase().endsWith('@glbitm.ac.in')) {
       _showWarning('College email must end with @glbitm.ac.in');
       return;
     }
@@ -251,30 +238,6 @@ class _SimLoginCardState extends State<SimLoginCard> {
 
               const SizedBox(height: 14),
 
-              // Quick Test Student Records Chips
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '⚡ Tap to load sample student credentials:',
-                    style: TextStyle(color: AppColors.softBeige, fontSize: 11),
-                  ),
-                  const SizedBox(height: 8),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildDemoChip('Yuvraj (25116CN451 • CSIT)', '25116CN451', '25116cn451@glbitm.ac.in'),
-                        const SizedBox(width: 8),
-                        _buildDemoChip('Ananya (IT • 8th Sem)', 'GLB21IT045', 'glb21it045@glbitm.ac.in'),
-                        const SizedBox(width: 8),
-                        _buildDemoChip('Rohan (AIML • 4th Sem)', 'GLB23AIML022', 'glb23aiml022@glbitm.ac.in'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
               if (authProvider.errorMessage != null) ...[
                 const SizedBox(height: 12),
                 Container(
@@ -418,31 +381,6 @@ class _SimLoginCardState extends State<SimLoginCard> {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDemoChip(String label, String adm, String email) {
-    final isSelected = _admissionController.text.trim().toUpperCase() == adm;
-    return GestureDetector(
-      onTap: () => _fillDemo(adm, email, 'simpass123'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.caramel.withOpacity(0.35) : const Color(0x661F140D),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? AppColors.beige : const Color(0x33DDB892),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? AppColors.ivory : AppColors.softBeige,
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
       ),
