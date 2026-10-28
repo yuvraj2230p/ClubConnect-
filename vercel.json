@@ -15,11 +15,11 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://club-connect-api.onrender.com/api/$1"
+      "destination": "https://clubconnect-3gl1.onrender.com/api/$1"
     },
     {
       "source": "/static/(.*)",
-      "destination": "https://club-connect-api.onrender.com/static/$1"
+      "destination": "https://clubconnect-3gl1.onrender.com/static/$1"
     },
     {
       "source": "/html5-qrcode.min.js",
