@@ -278,7 +278,7 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
 
               const SizedBox(height: 14),
 
-              // Real Webcam Launch Button
+              // Real Webcam Launch & Photo Upload Buttons
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -306,6 +306,31 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                       color: AppColors.espressoDark,
                       fontWeight: FontWeight.bold,
                       fontSize: 13.5,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Upload Card Photo Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => triggerCardPhotoUpload(),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.caramel.withOpacity(0.6), width: 1.2),
+                    backgroundColor: const Color(0x332A1C14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  icon: const Icon(Icons.photo_camera_back, color: AppColors.beige, size: 18),
+                  label: const Text(
+                    '📁 Or Upload / Snap Card Photo',
+                    style: TextStyle(
+                      color: AppColors.beige,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.5,
                     ),
                   ),
                 ),

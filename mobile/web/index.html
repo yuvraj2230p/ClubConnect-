@@ -1,24 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Club Connect - Campus Student Society & Event Platform">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -29,7 +16,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>club_connect</title>
+  <title>Club Connect</title>
   <link rel="manifest" href="manifest.json">
   <script src="html5-qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -60,6 +47,9 @@
       border-radius: 24px;
       overflow: hidden;
       box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(184, 125, 75, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     #qr-reader {
       width: 100% !important;
@@ -93,26 +83,87 @@
       from { top: 20px; }
       to { top: 290px; }
     }
+    #camera-loading-view {
+      position: absolute;
+      inset: 0;
+      background: #140D08;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      color: #DDB892;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .scanner-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(221, 184, 146, 0.2);
+      border-top-color: #DDB892;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    #camera-error-view {
+      position: absolute;
+      inset: 0;
+      background: #160F0A;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 24px 20px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <!-- Real Webcam Full-Screen Scanner Overlay -->
   <div id="real-camera-modal">
-    <div style="max-width: 440px; width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+    <div style="max-width: 440px; width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 22px;">📷</span>
+        <span style="font-size: 24px;">📷</span>
         <div>
-          <div style="font-weight: 800; font-size: 15px; letter-spacing: 0.3px;">GL Bajaj Real ID Card Scanner</div>
-          <div style="font-size: 11px; color: #DDB892;">Point camera at your physical card (QR or Barcode)</div>
+          <div style="font-weight: 800; font-size: 15px; letter-spacing: 0.3px; color: #FAF6F0;">GL Bajaj ID Card Scanner</div>
+          <div id="camera-status-text" style="font-size: 11px; color: #DDB892;">Point camera at physical card barcode / QR</div>
         </div>
       </div>
       <button onclick="stopRealCameraScan()" style="background: #2A1C14; border: 1px solid #432F23; color: #D4C7B8; border-radius: 50%; width: 34px; height: 34px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">✕</button>
+    </div>
+
+    <!-- Camera Selector Row (visible if multiple cameras) -->
+    <div id="camera-select-row" style="display: none; max-width: 440px; width: 100%; margin-bottom: 10px;">
+      <select id="camera-select" onchange="onCameraSelected(this.value)" style="width: 100%; padding: 8px 12px; background: #2A1C14; border: 1px solid #DDB892; border-radius: 10px; color: #FAF6F0; font-size: 12px; font-family: inherit; outline: none;">
+      </select>
     </div>
 
     <div id="camera-feed-box">
       <div id="qr-reader"></div>
       <div id="scanner-laser"></div>
       
+      <!-- Loading View -->
+      <div id="camera-loading-view">
+        <div class="scanner-spinner"></div>
+        <div>Starting camera... Please allow access if asked</div>
+      </div>
+
+      <!-- Camera Error Card -->
+      <div id="camera-error-view">
+        <div style="font-size: 36px; margin-bottom: 8px;">📷❌</div>
+        <div style="font-weight: 800; font-size: 15px; color: #FAF6F0; margin-bottom: 6px;">Camera Access Needed</div>
+        <div id="camera-error-detail" style="font-size: 12px; color: #DDB892; margin-bottom: 18px; line-height: 1.5; max-width: 340px;">
+          Please allow camera permission in your browser (tap the lock/camera icon in your address bar).
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px;">
+          <button onclick="retryCameraPermission()" style="padding: 11px; background: #B87D4B; border: none; color: #1C130D; font-weight: bold; font-size: 12.5px; border-radius: 10px; cursor: pointer;">🔄 Try Camera Again</button>
+          <button onclick="document.getElementById('card-image-file').click()" style="padding: 11px; background: #2A1C14; border: 1.5px solid #DDB892; color: #DDB892; font-weight: bold; font-size: 12.5px; border-radius: 10px; cursor: pointer;">📁 Or Upload / Snap Card Photo</button>
+        </div>
+      </div>
+
       <!-- Viewfinder Accents -->
       <div style="position: absolute; top: 12px; left: 12px; width: 24px; height: 24px; border-top: 3px solid #DDB892; border-left: 3px solid #DDB892; z-index: 10; pointer-events: none;"></div>
       <div style="position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-top: 3px solid #DDB892; border-right: 3px solid #DDB892; z-index: 10; pointer-events: none;"></div>
@@ -120,9 +171,10 @@
       <div style="position: absolute; bottom: 12px; right: 12px; width: 24px; height: 24px; border-bottom: 3px solid #DDB892; border-right: 3px solid #DDB892; z-index: 10; pointer-events: none;"></div>
     </div>
 
+    <!-- Bottom Actions -->
     <div style="margin-top: 14px; display: flex; gap: 10px; width: 100%; max-width: 440px;">
-      <button onclick="document.getElementById('card-image-file').click()" style="flex: 1; padding: 12px; background: #2A1C14; border: 1.5px solid #DDB892; color: #DDB892; font-weight: bold; font-size: 12px; border-radius: 14px; cursor: pointer; transition: all 0.2s;">📁 Or Upload Card Photo</button>
-      <button onclick="stopRealCameraScan()" style="padding: 12px 20px; background: #35251C; border: none; color: #FAF6F0; font-weight: bold; font-size: 12px; border-radius: 14px; cursor: pointer;">Cancel</button>
+      <button onclick="document.getElementById('card-image-file').click()" style="flex: 1; padding: 12px; background: #2A1C14; border: 1.5px solid #DDB892; color: #DDB892; font-weight: bold; font-size: 12px; border-radius: 14px; cursor: pointer; transition: all 0.2s;">📁 Or Upload / Snap Card Photo</button>
+      <button onclick="stopRealCameraScan()" style="padding: 12px 20px; background: #35251C; border: none; color: #FAF6F0; font-weight: bold; font-size: 12px; border-radius: 14px; cursor: pointer;">Close</button>
       <input type="file" id="card-image-file" accept="image/*" style="display: none;" onchange="handleHtmlCardUpload(event)">
     </div>
 
@@ -134,101 +186,211 @@
   <script>
     let html5QrScannerInstance = null;
     let isCurrentlyScanning = false;
+    let currentCameraList = [];
+    let currentSelectedCameraId = null;
 
-    window.startRealCameraScan = async function() {
+    window.triggerHtmlCardUpload = function() {
+      const input = document.getElementById('card-image-file');
+      if (input) input.click();
+    };
+
+    function showCameraError(msg) {
+      const errView = document.getElementById('camera-error-view');
+      const errDetail = document.getElementById('camera-error-detail');
+      const statusText = document.getElementById('camera-status-text');
+      const loadingView = document.getElementById('camera-loading-view');
+      const laser = document.getElementById('scanner-laser');
+      if (loadingView) loadingView.style.display = 'none';
+      if (errDetail) errDetail.innerText = msg;
+      if (errView) errView.style.display = 'flex';
+      if (statusText) statusText.innerText = '⚠️ Camera blocked or unavailable';
+      if (laser) laser.style.display = 'none';
+    }
+
+    function hideCameraError() {
+      const errView = document.getElementById('camera-error-view');
+      if (errView) errView.style.display = 'none';
+      const laser = document.getElementById('scanner-laser');
+      if (laser) laser.style.display = 'block';
+    }
+
+    async function cleanupScanner() {
+      isCurrentlyScanning = false;
+      if (html5QrScannerInstance) {
+        try {
+          if (html5QrScannerInstance.isScanning) {
+            await html5QrScannerInstance.stop();
+          }
+          html5QrScannerInstance.clear();
+        } catch(e) {
+          console.warn("Cleanup warning:", e);
+        }
+        html5QrScannerInstance = null;
+      }
+      const readerEl = document.getElementById('qr-reader');
+      if (readerEl) readerEl.innerHTML = '';
+    }
+
+    function createFreshScanner() {
+      return new Html5Qrcode("qr-reader", {
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.DATA_MATRIX
+        ],
+        verbose: false
+      });
+    }
+
+    const scannerConfig = {
+      fps: 20,
+      qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const w = Math.floor(Math.min(viewfinderWidth * 0.95, 420));
+        const h = Math.floor(Math.min(viewfinderHeight * 0.85, 260));
+        return { width: Math.max(200, w), height: Math.max(120, h) };
+      },
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: false // Software ZXing decodes Code 128 barcodes reliably across browsers
+      }
+    };
+
+    window.startRealCameraScan = async function(preferredCameraId = null) {
       const modal = document.getElementById('real-camera-modal');
       const feedback = document.getElementById('scan-feedback');
+      const statusText = document.getElementById('camera-status-text');
+      const loadingView = document.getElementById('camera-loading-view');
+
       if (feedback) feedback.style.display = 'none';
       if (modal) modal.style.display = 'flex';
+      hideCameraError();
+      if (loadingView) loadingView.style.display = 'flex';
+      if (statusText) statusText.innerText = 'Requesting camera access...';
 
-      if (isCurrentlyScanning && html5QrScannerInstance) return;
+      await cleanupScanner();
 
+      if (typeof Html5Qrcode === 'undefined') {
+        showCameraError("Scanner library is initializing. Please click 'Try Camera Again' in a few seconds.");
+        return;
+      }
+
+      // 1. Enumerate available cameras
       try {
-        if (typeof Html5Qrcode === 'undefined') {
-          console.error("Html5Qrcode not yet loaded");
-          alert("Scanner library is initializing, please wait a moment.");
-          return;
-        }
+        currentCameraList = await Html5Qrcode.getCameras();
+      } catch (enumErr) {
+        console.warn("getCameras warning:", enumErr);
+        currentCameraList = [];
+      }
 
-        if (html5QrScannerInstance) {
-          try {
-            await html5QrScannerInstance.stop();
-            html5QrScannerInstance.clear();
-          } catch(e) {}
-        }
-
-        html5QrScannerInstance = new Html5Qrcode("qr-reader", {
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.QR_CODE,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.DATA_MATRIX
-          ],
-          verbose: false
+      // Populate camera switcher UI if multiple cameras exist
+      const selectRow = document.getElementById('camera-select-row');
+      const selectEl = document.getElementById('camera-select');
+      if (currentCameraList && currentCameraList.length > 1 && selectEl && selectRow) {
+        selectEl.innerHTML = '';
+        currentCameraList.forEach((cam, idx) => {
+          const opt = document.createElement('option');
+          opt.value = cam.id;
+          opt.text = cam.label || ('Camera ' + (idx + 1));
+          selectEl.appendChild(opt);
         });
+        selectRow.style.display = 'block';
+      } else if (selectRow) {
+        selectRow.style.display = 'none';
+      }
 
-        isCurrentlyScanning = true;
+      const qrCodeSuccessCallback = (decodedText) => {
+        onCardDecoded(decodedText);
+      };
 
-        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-          if (!isCurrentlyScanning) return;
-          isCurrentlyScanning = false;
-          onCardDecoded(decodedText);
-        };
+      let started = false;
 
-        const config = {
-          fps: 24,
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            // Full-width generous viewport so Code 128 linear barcodes are never cropped
-            const w = Math.min(viewfinderWidth * 0.98, 480);
-            const h = Math.min(viewfinderHeight * 0.88, 320);
-            return { width: Math.max(280, Math.floor(w)), height: Math.max(180, Math.floor(h)) };
-          },
-          aspectRatio: 1.333333,
-          experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true
+      // Strategy 1: Start using cameraId if available
+      if (currentCameraList && currentCameraList.length > 0) {
+        let targetId = preferredCameraId;
+        if (!targetId) {
+          // Look for back camera
+          for (const cam of currentCameraList) {
+            if (/back|rear|environment/i.test(cam.label)) {
+              targetId = cam.id;
+              break;
+            }
           }
-        };
+          if (!targetId && currentCameraList.length > 1) {
+            targetId = currentCameraList[currentCameraList.length - 1].id;
+          }
+          if (!targetId) {
+            targetId = currentCameraList[0].id;
+          }
+        }
 
-        const cameraConstraints = {
-          facingMode: "environment",
-          width: { min: 640, ideal: 1920 },
-          height: { min: 480, ideal: 1080 }
-        };
+        currentSelectedCameraId = targetId;
+        if (selectEl) selectEl.value = targetId;
 
         try {
-          await html5QrScannerInstance.start(
-            cameraConstraints,
-            config,
-            qrCodeSuccessCallback
-          );
-        } catch (envErr) {
-          console.warn("Back camera unavailable, attempting default camera:", envErr);
-          await html5QrScannerInstance.start(
-            { facingMode: "user" },
-            config,
-            qrCodeSuccessCallback
-          );
+          html5QrScannerInstance = createFreshScanner();
+          await html5QrScannerInstance.start(targetId, scannerConfig, qrCodeSuccessCallback);
+          started = true;
+          isCurrentlyScanning = true;
+          if (loadingView) loadingView.style.display = 'none';
+          const activeCam = currentCameraList.find(c => c.id === targetId);
+          if (statusText) statusText.innerText = '📷 ' + ((activeCam && activeCam.label) ? activeCam.label : 'Camera Active');
+        } catch (idErr) {
+          console.warn("Camera start by ID failed:", idErr);
+          await cleanupScanner();
         }
-      } catch (err) {
-        console.error("Camera start failed:", err);
-        isCurrentlyScanning = false;
-        alert("Camera could not be started: " + (err.message || err) + "\n\nYou can click '📁 Or Upload Card Photo' to select your ID card image.");
+      }
+
+      // Strategy 2: Fallback to { facingMode: "environment" }
+      if (!started) {
+        try {
+          html5QrScannerInstance = createFreshScanner();
+          await html5QrScannerInstance.start({ facingMode: "environment" }, scannerConfig, qrCodeSuccessCallback);
+          started = true;
+          isCurrentlyScanning = true;
+          if (loadingView) loadingView.style.display = 'none';
+          if (statusText) statusText.innerText = '📷 Back Camera Active';
+        } catch (envErr) {
+          console.warn("Back camera facingMode failed:", envErr);
+          await cleanupScanner();
+        }
+      }
+
+      // Strategy 3: Fallback to { facingMode: "user" } (Facetime / Webcam on laptops)
+      if (!started) {
+        try {
+          html5QrScannerInstance = createFreshScanner();
+          await html5QrScannerInstance.start({ facingMode: "user" }, scannerConfig, qrCodeSuccessCallback);
+          started = true;
+          isCurrentlyScanning = true;
+          if (loadingView) loadingView.style.display = 'none';
+          if (statusText) statusText.innerText = '📷 Webcam / Front Camera Active';
+        } catch (usrErr) {
+          console.warn("User camera facingMode failed:", usrErr);
+          await cleanupScanner();
+        }
+      }
+
+      // If all attempts failed
+      if (!started) {
+        showCameraError("Your browser blocked camera permission or no camera was found. Please allow camera access in your address bar, or click 'Upload / Snap Card Photo' below.");
+      }
+    };
+
+    window.retryCameraPermission = function() {
+      hideCameraError();
+      window.startRealCameraScan(currentSelectedCameraId);
+    };
+
+    window.onCameraSelected = function(camId) {
+      if (camId) {
+        window.startRealCameraScan(camId);
       }
     };
 
     window.stopRealCameraScan = async function() {
-      isCurrentlyScanning = false;
-      if (html5QrScannerInstance) {
-        try {
-          await html5QrScannerInstance.stop();
-          html5QrScannerInstance.clear();
-        } catch(e) {
-          console.warn("Error stopping scanner:", e);
-        }
-        html5QrScannerInstance = null;
-      }
+      await cleanupScanner();
       const modal = document.getElementById('real-camera-modal');
       if (modal) modal.style.display = 'none';
     };
@@ -262,8 +424,10 @@
       if (!file) return;
 
       const feedback = document.getElementById('scan-feedback');
+      const modal = document.getElementById('real-camera-modal');
+      if (modal) modal.style.display = 'flex';
       if (feedback) {
-        feedback.innerText = "⏳ Reading ID card barcode & authenticating...";
+        feedback.innerText = "⏳ Processing ID card barcode & authenticating...";
         feedback.style.display = 'block';
       }
 
@@ -280,7 +444,7 @@
             ]
           });
           const decoded = await uploader.scanFile(file, true);
-          uploader.clear();
+          try { uploader.clear(); } catch(e){}
           if (decoded && decoded.trim()) {
             onCardDecoded(decoded);
             return;
@@ -300,7 +464,7 @@
         });
         const data = await resp.json();
         if (resp.ok && data.user) {
-          if (feedback) feedback.innerText = "✓ ID Card Verified! Photo & records synced!";
+          if (feedback) feedback.innerText = "✓ ID Card Verified! " + (data.user.full_name || '') + " synced!";
           if (data.token) {
             localStorage.setItem('auth_token', data.token);
             localStorage.setItem('jwt_token', data.token);
@@ -320,16 +484,6 @@
       alert("Could not detect barcode or QR code on this photo. Please ensure the code is clearly visible and well-lit.");
     }
   </script>
-</head>
-<body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

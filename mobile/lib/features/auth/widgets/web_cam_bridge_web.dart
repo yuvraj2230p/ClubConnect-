@@ -20,6 +20,14 @@ void stopRealWebcamScan() {
   }
 }
 
+void triggerCardPhotoUpload() {
+  try {
+    js.context.callMethod('triggerHtmlCardUpload');
+  } catch (e) {
+    // ignore
+  }
+}
+
 void listenForCardScan(void Function(String code) onScan) {
   stopListeningForCardScan();
   _listener = (html.Event event) {
