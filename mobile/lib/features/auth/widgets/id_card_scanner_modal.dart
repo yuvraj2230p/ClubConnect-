@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/auth_provider.dart';
 import 'web_cam_bridge.dart';
@@ -25,7 +26,7 @@ class IdCardScannerModal extends StatefulWidget {
 class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTickerProviderStateMixin {
   late AnimationController _laserController;
   late TextEditingController _customCodeController;
-  bool _isQrMode = true; // Default to QR code on front
+  bool _isQrMode = false; // Default to Code 128 Barcode on ID Card Front
   bool _isVerified = false;
 
   @override
@@ -324,37 +325,6 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => _onToggleMode(true),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: _isQrMode ? AppColors.caramel : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.qr_code_2,
-                                size: 16,
-                                color: _isQrMode ? AppColors.espressoDark : AppColors.softBeige,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'QR Code (Front)',
-                                style: TextStyle(
-                                  color: _isQrMode ? AppColors.espressoDark : AppColors.softBeige,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
                         onTap: () => _onToggleMode(false),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -372,9 +342,40 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'Barcode (Back)',
+                                'Barcode (Front)',
                                 style: TextStyle(
                                   color: !_isQrMode ? AppColors.espressoDark : AppColors.softBeige,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _onToggleMode(true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _isQrMode ? AppColors.caramel : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.qr_code_2,
+                                size: 16,
+                                color: _isQrMode ? AppColors.espressoDark : AppColors.softBeige,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'QR Code (Back)',
+                                style: TextStyle(
+                                  color: _isQrMode ? AppColors.espressoDark : AppColors.softBeige,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -566,12 +567,14 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                       CircleAvatar(
                         radius: 28,
                         backgroundColor: AppColors.caramel,
-                        backgroundImage: const AssetImage('assets/images/yuvraj_avatar.jpg'),
-                        foregroundImage: (verifiedUser?.avatarUrl.isNotEmpty == true && verifiedUser!.avatarUrl.startsWith('http'))
-                            ? NetworkImage(verifiedUser!.avatarUrl)
+                        foregroundImage: (verifiedUser?.avatarUrl.isNotEmpty == true)
+                            ? NetworkImage(ApiConstants.resolveUrl(verifiedUser!.avatarUrl))
                             : null,
-                        onBackgroundImageError: (e, s) {},
                         onForegroundImageError: (e, s) {},
+                        child: Text(
+                          (verifiedUser?.fullName.isNotEmpty == true) ? verifiedUser!.fullName[0].toUpperCase() : 'S',
+                          style: const TextStyle(color: AppColors.espressoDark, fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -593,7 +596,7 @@ class _IdCardScannerModalState extends State<IdCardScannerModal> with SingleTick
                               ],
                             ),
                             Text(
-                              '${verifiedUser?.semester ?? "6th Semester"} • ${verifiedUser?.department ?? "Computer Science"}',
+                              '${verifiedUser?.semester.isNotEmpty == true ? verifiedUser!.semester : "Sem III"} • ${verifiedUser?.department ?? "B.TECH.(CSIT)"}',
                               style: const TextStyle(color: AppColors.beige, fontSize: 11),
                             ),
                             Text(

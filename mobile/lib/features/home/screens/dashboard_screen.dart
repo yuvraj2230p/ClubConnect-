@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/clubs_provider.dart';
@@ -107,12 +108,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: CircleAvatar(
                           radius: 22,
                           backgroundColor: AppColors.primaryLight,
-                          backgroundImage: const AssetImage('assets/images/yuvraj_avatar.jpg'),
-                          foregroundImage: (user?.avatarUrl.isNotEmpty == true && user!.avatarUrl.startsWith('http'))
-                              ? NetworkImage(user!.avatarUrl)
+                          foregroundImage: (user?.avatarUrl.isNotEmpty == true)
+                              ? NetworkImage(ApiConstants.resolveUrl(user!.avatarUrl))
                               : null,
-                          onBackgroundImageError: (exception, stackTrace) {},
                           onForegroundImageError: (exception, stackTrace) {},
+                          child: Text(
+                            (user?.fullName.isNotEmpty == true) ? user!.fullName[0].toUpperCase() : 'S',
+                            style: const TextStyle(color: AppColors.espressoDark, fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
                         ),
                       ),
                     ),

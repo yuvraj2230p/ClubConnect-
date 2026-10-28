@@ -35,30 +35,35 @@ class SIMLoginView(APIView):
 
 class IDCardScanLoginView(APIView):
     """
-    Authenticates students by scanning the barcode or QR code on their physical college ID card.
-    Extracts Admission Number or Roll Number and auto-verifies with the SIM database.
+    Direct College ID Card Barcode / QR Scanner:
+    1. Reads Code 128 barcode or QR code from video scan or uploaded card photo.
+    2. Deep-inspects barcode contents for embedded details (photo, semester, name, admission number).
+    3. Auto-queries live GL Bajaj ERP portal for verified profile data.
+    4. Auto-crops student portrait photo if physical card image was provided.
+    5. Signs in student and returns JWT authentication token.
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
         code_data = request.data.get('code_data', '').strip()
+        pil_card_img = None
+        upright_card_img = None
 
         # Check if an image was uploaded instead of direct text
-        if not code_data:
-            card_img = request.FILES.get('card_image') or request.data.get('card_image')
-            if card_img:
-                try:
-                    pil_img = IDCardPhotoService.load_image(card_img)
-                    _, decoded_code, _, _ = IDCardPhotoService.decode_card_barcode_and_orient(pil_img)
-                    if decoded_code:
-                        code_data = decoded_code.strip()
-                except Exception as e:
-                    pass
+        card_img = request.FILES.get('card_image') or request.data.get('card_image') or request.data.get('card_image_base64')
+        if card_img:
+            try:
+                pil_card_img = IDCardPhotoService.load_image(card_img)
+                upright_card_img, decoded_code, _, _ = IDCardPhotoService.decode_card_barcode_and_orient(pil_card_img)
+                if decoded_code:
+                    code_data = decoded_code.strip()
+            except Exception as e:
+                pass
 
-        if not code_data:
+        if not code_data and not card_img:
             return Response({"error": "No barcode or QR code detected from scan. Please hold your ID card clearly in good lighting."}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = SIMAuthService.authenticate_id_card_scan(code_data)
+        user = SIMAuthService.authenticate_id_card_scan(code_data, card_image=card_img)
         if not user:
             return Response(
                 {"error": "ID card could not be matched with college records."},
@@ -77,7 +82,7 @@ class VerifyStudentIDCardView(APIView):
     """
     2-Step ID Card Cross-Check:
     1. Validates entered Admission Number & College Email (<adm>@glbitm.ac.in).
-    2. Decodes QR code and cross-checks that the scanned card matches the entered Admission Number.
+    2. Decodes QR / Barcode and cross-checks that the scanned card matches the entered Admission Number.
     3. Auto-retrieves Full Name, Photo, Semester & Branch from SIM records!
     """
     permission_classes = [AllowAny]
@@ -90,8 +95,9 @@ class VerifyStudentIDCardView(APIView):
         adm = serializer.validated_data['admission_number']
         email = serializer.validated_data['college_email']
         qr_data = serializer.validated_data['qr_code_data']
+        card_img = request.FILES.get('card_image') or request.data.get('card_image_base64')
 
-        user, error = SIMAuthService.verify_with_qr_crosscheck(adm, email, qr_data)
+        user, error = SIMAuthService.verify_with_qr_crosscheck(adm, email, qr_data, card_image=card_img)
         if error:
             return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
 

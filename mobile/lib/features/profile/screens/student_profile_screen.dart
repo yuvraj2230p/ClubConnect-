@@ -117,12 +117,14 @@ class StudentProfileScreen extends StatelessWidget {
                       CircleAvatar(
                         radius: 38,
                         backgroundColor: AppColors.caramel,
-                        backgroundImage: const AssetImage('assets/images/yuvraj_avatar.jpg'),
                         foregroundImage: (user?.avatarUrl.isNotEmpty == true)
                             ? NetworkImage(ApiConstants.resolveUrl(user!.avatarUrl))
                             : null,
-                        onBackgroundImageError: (exception, stackTrace) {},
                         onForegroundImageError: (exception, stackTrace) {},
+                        child: Text(
+                          (user?.fullName.isNotEmpty == true) ? user!.fullName[0].toUpperCase() : 'S',
+                          style: const TextStyle(color: AppColors.espressoDark, fontWeight: FontWeight.bold, fontSize: 24),
+                        ),
                       ),
                       GestureDetector(
                         onTap: () => _showIdCardPhotoExtractionSheet(context),

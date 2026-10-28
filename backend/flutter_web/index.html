@@ -178,11 +178,12 @@
         };
 
         const config = {
-          fps: 20,
+          fps: 24,
           qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const w = Math.min(viewfinderWidth * 0.92, 420);
-            const h = Math.min(viewfinderHeight * 0.70, 260);
-            return { width: Math.max(260, Math.floor(w)), height: Math.max(160, Math.floor(h)) };
+            // Full-width generous viewport so Code 128 linear barcodes are never cropped
+            const w = Math.min(viewfinderWidth * 0.98, 480);
+            const h = Math.min(viewfinderHeight * 0.88, 320);
+            return { width: Math.max(280, Math.floor(w)), height: Math.max(180, Math.floor(h)) };
           },
           aspectRatio: 1.333333,
           experimentalFeatures: {
@@ -299,11 +300,16 @@
         });
         const data = await resp.json();
         if (resp.ok && data.user) {
-          if (feedback) feedback.innerText = "✓ ID Card Barcode Verified! Redirecting...";
+          if (feedback) feedback.innerText = "✓ ID Card Verified! Photo & records synced!";
+          if (data.token) {
+            localStorage.setItem('auth_token', data.token);
+            localStorage.setItem('jwt_token', data.token);
+            localStorage.setItem('current_user', JSON.stringify(data.user));
+          }
           setTimeout(() => {
             window.stopRealCameraScan();
             window.dispatchEvent(new CustomEvent('card_scanned_event', { detail: data.user.admission_number }));
-          }, 400);
+          }, 350);
           return;
         }
       } catch (srvErr) {
