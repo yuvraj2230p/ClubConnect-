@@ -42,8 +42,21 @@ class IDCardScanLoginView(APIView):
 
     def post(self, request):
         code_data = request.data.get('code_data', '').strip()
+
+        # Check if an image was uploaded instead of direct text
         if not code_data:
-            return Response({"error": "No barcode or QR code data detected from scan."}, status=status.HTTP_400_BAD_REQUEST)
+            card_img = request.FILES.get('card_image') or request.data.get('card_image')
+            if card_img:
+                try:
+                    pil_img = IDCardPhotoService.load_image(card_img)
+                    _, decoded_code, _, _ = IDCardPhotoService.decode_card_barcode_and_orient(pil_img)
+                    if decoded_code:
+                        code_data = decoded_code.strip()
+                except Exception as e:
+                    pass
+
+        if not code_data:
+            return Response({"error": "No barcode or QR code detected from scan. Please hold your ID card clearly in good lighting."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = SIMAuthService.authenticate_id_card_scan(code_data)
         if not user:

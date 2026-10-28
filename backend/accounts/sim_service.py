@@ -8,14 +8,14 @@ DEMO_SIM_RECORDS = {
     "25116CN451": {
         "admission_number": "25116CN451",
         "email": "25116cn451@glbitm.ac.in",
-        "full_name": "YUVRAJ",
-        "department": "Computer Science & Information Technology (CSIT)",
-        "year": "1st Year",
-        "semester": "2nd Semester",
-        "section": "CSIT-A",
+        "full_name": "Yuvraj",
+        "department": "B.TECH.(CSIT)",
+        "year": "2025 Batch",
+        "semester": "Sem III",
+        "section": "Day Scholar",
         "roll_number": "25116CN451",
         "role": "student",
-        "avatar_url": "/static/images/yuvraj_avatar.jpg",
+        "avatar_url": "/static/images/avatars/25116CN451_avatar.jpg",
         "batch": "2025-29",
         "blood_group": "B+",
         "father_name": "Dwarika Prasad",
@@ -211,18 +211,104 @@ class SIMAuthService:
         return None
 
     @classmethod
-    def _authenticate_simulated(cls, identifier: str, password: str):
-        # Check against pre-seeded records first
-        norm_key = identifier.upper()
-        record = None
+    def fetch_live_glb_portal_student_data(cls, identifier: str) -> dict:
+        """
+        Queries the live official GL Bajaj SIM / Hostel Verification portal:
+        URL: https://glbg.servergi.com:8072/SIMWEBGLB/Services/WSDataServices.asmx/GetStudentDetailForVerifyHostel
+        Returns real student name, course, semester, session, and downloads real official photo!
+        """
+        import requests, os, re
+        from django.conf import settings
 
+        adm_clean = re.sub(r'[^A-Za-z0-9]', '', identifier).upper()
+        if not adm_clean:
+            return None
+
+        payload = {
+            "param": f'[ {{ "FormName" : "frmVerifyHostal", "StuAdmissionNo" : "{adm_clean}" }} ]'
+        }
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "Mozilla/5.0 (ClubConnect App)"
+        }
+        try:
+            resp = requests.post(
+                "https://glbg.servergi.com:8072/SIMWEBGLB/Services/WSDataServices.asmx/GetStudentDetailForVerifyHostel",
+                json=payload,
+                headers=headers,
+                timeout=5,
+                verify=False
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                raw_d = data.get('d', '')
+                if raw_d and 'Student_Name' in raw_d:
+                    parsed = {}
+                    for item in raw_d.split('π'):
+                        if '&' in item:
+                            k, v = item.split('&', 1)
+                            parsed[k.strip()] = v.strip()
+
+                    student_id = parsed.get('Student_Id')
+                    student_name = parsed.get('Student_Name', adm_clean).title()
+                    course_name = parsed.get('Course_name', 'B.TECH.(CSIT)')
+                    sem_str = parsed.get('Semester', 'Sem III')
+                    session_str = parsed.get('Session', '2025')
+                    status_str = parsed.get('Status', 'Day Scholar')
+
+                    avatar_url = f"/static/images/avatars/{adm_clean}_avatar.jpg"
+                    if student_id:
+                        try:
+                            photo_url = f"https://glbg.servergi.com:8072/SIMWEBGLB/Services/getImage.ashx?MasterId={student_id}&Category=Student&ImageRefName=Photo"
+                            photo_resp = requests.get(photo_url, timeout=6, verify=False)
+                            if photo_resp.status_code == 200 and len(photo_resp.content) > 500:
+                                avatar_dir = os.path.join(settings.BASE_DIR, 'static', 'images', 'avatars')
+                                os.makedirs(avatar_dir, exist_ok=True)
+                                with open(os.path.join(avatar_dir, f"{adm_clean}_avatar.jpg"), 'wb') as f:
+                                    f.write(photo_resp.content)
+                                # Also copy to flutter_web so immediately live
+                                web_avatar_dir = os.path.join(settings.BASE_DIR, 'flutter_web', 'static', 'images', 'avatars')
+                                os.makedirs(web_avatar_dir, exist_ok=True)
+                                with open(os.path.join(web_avatar_dir, f"{adm_clean}_avatar.jpg"), 'wb') as f:
+                                    f.write(photo_resp.content)
+                        except Exception as photo_err:
+                            print(f"Error caching live student photo: {photo_err}")
+
+                    return {
+                        "admission_number": adm_clean,
+                        "email": f"{adm_clean.lower()}@glbitm.ac.in",
+                        "full_name": student_name,
+                        "department": course_name,
+                        "semester": sem_str,
+                        "year": f"{session_str} Batch",
+                        "section": status_str,
+                        "roll_number": adm_clean,
+                        "avatar_url": avatar_url,
+                        "role": "student",
+                        "is_sim_verified": True
+                    }
+        except Exception as e:
+            print(f"GL Bajaj Portal query error: {e}")
+
+        return None
+
+    @classmethod
+    def _authenticate_simulated(cls, identifier: str, password: str):
+        norm_key = identifier.upper()
+
+        # 1. Attempt to fetch real-time student details & official photo from GL Bajaj portal
+        portal_data = cls.fetch_live_glb_portal_student_data(norm_key)
+        if portal_data:
+            return cls._get_or_create_user_from_sim_data(portal_data)
+
+        # 2. Check against pre-seeded records
+        record = None
         for k, v in DEMO_SIM_RECORDS.items():
             if k == norm_key or v['email'].lower() == identifier.lower() or v['roll_number'] == identifier:
                 record = v
                 break
 
-        # If not in demo list, dynamically synthesize verified college student record
-        # from the college email or admission number format!
+        # 3. If not in demo list, dynamically synthesize verified college student record
         if not record:
             if '@' in identifier:
                 email = identifier.lower()
@@ -240,6 +326,7 @@ class SIMAuthService:
                 "full_name": name,
                 "department": "Computer Science & Engineering",
                 "year": "3rd Year",
+                "semester": "5th Semester",
                 "section": "A",
                 "roll_number": adm if adm.isdigit() else "2201920100999",
                 "role": "student",

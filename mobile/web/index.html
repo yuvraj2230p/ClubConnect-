@@ -178,18 +178,27 @@
         };
 
         const config = {
-          fps: 15,
+          fps: 20,
           qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-            const edge = Math.max(160, Math.floor(minEdge * 0.72));
-            return { width: edge, height: edge };
+            const w = Math.min(viewfinderWidth * 0.92, 420);
+            const h = Math.min(viewfinderHeight * 0.70, 260);
+            return { width: Math.max(260, Math.floor(w)), height: Math.max(160, Math.floor(h)) };
           },
-          aspectRatio: 1.333333
+          aspectRatio: 1.333333,
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true
+          }
+        };
+
+        const cameraConstraints = {
+          facingMode: "environment",
+          width: { min: 640, ideal: 1920 },
+          height: { min: 480, ideal: 1080 }
         };
 
         try {
           await html5QrScannerInstance.start(
-            { facingMode: "environment" },
+            cameraConstraints,
             config,
             qrCodeSuccessCallback
           );
@@ -251,33 +260,58 @@
       const file = e.target.files && e.target.files[0];
       if (!file) return;
 
+      const feedback = document.getElementById('scan-feedback');
+      if (feedback) {
+        feedback.innerText = "⏳ Reading ID card barcode & authenticating...";
+        feedback.style.display = 'block';
+      }
+
+      // 1. Try client-side Html5Qrcode
       try {
-        if (typeof Html5Qrcode === 'undefined') {
-          alert("Scanner library is initializing, please try again in 2 seconds.");
-          return;
-        }
-
-        const uploader = new Html5Qrcode("qr-reader", {
-          formatsToSupport: [
-            Html5QrcodeSupportedFormats.QR_CODE,
-            Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.UPC_A
-          ]
-        });
-
-        const decoded = await uploader.scanFile(file, true);
-        uploader.clear();
-
-        if (decoded) {
-          onCardDecoded(decoded);
-          return;
+        if (typeof Html5Qrcode !== 'undefined') {
+          const uploader = new Html5Qrcode("qr-reader", {
+            formatsToSupport: [
+              Html5QrcodeSupportedFormats.CODE_128,
+              Html5QrcodeSupportedFormats.CODE_39,
+              Html5QrcodeSupportedFormats.QR_CODE,
+              Html5QrcodeSupportedFormats.EAN_13,
+              Html5QrcodeSupportedFormats.UPC_A
+            ]
+          });
+          const decoded = await uploader.scanFile(file, true);
+          uploader.clear();
+          if (decoded && decoded.trim()) {
+            onCardDecoded(decoded);
+            return;
+          }
         }
       } catch (err) {
-        console.warn("Html5Qrcode scanFile error:", err);
-        alert("Could not detect barcode or QR code in photo. Please ensure the code is clearly focused and well-lit.");
+        console.warn("Client scanner error:", err);
       }
+
+      // 2. High-precision C++ ZXing server-side scan fallback
+      try {
+        const formData = new FormData();
+        formData.append('card_image', file);
+        const resp = await fetch('/api/auth/id-card-scan/', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await resp.json();
+        if (resp.ok && data.user) {
+          if (feedback) feedback.innerText = "✓ ID Card Barcode Verified! Redirecting...";
+          setTimeout(() => {
+            window.stopRealCameraScan();
+            window.dispatchEvent(new CustomEvent('card_scanned_event', { detail: data.user.admission_number }));
+          }, 400);
+          return;
+        }
+      } catch (srvErr) {
+        console.warn("Server decode error:", srvErr);
+      }
+
+      if (feedback) feedback.style.display = 'none';
+      alert("Could not detect barcode or QR code on this photo. Please ensure the code is clearly visible and well-lit.");
     }
   </script>
 </head>

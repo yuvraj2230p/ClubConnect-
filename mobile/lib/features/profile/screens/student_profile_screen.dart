@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../core/constants/api_constants.dart';
 
 class StudentProfileScreen extends StatelessWidget {
   const StudentProfileScreen({super.key});
@@ -117,8 +118,8 @@ class StudentProfileScreen extends StatelessWidget {
                         radius: 38,
                         backgroundColor: AppColors.caramel,
                         backgroundImage: const AssetImage('assets/images/yuvraj_avatar.jpg'),
-                        foregroundImage: (user?.avatarUrl.isNotEmpty == true && user!.avatarUrl.startsWith('http'))
-                            ? NetworkImage(user!.avatarUrl)
+                        foregroundImage: (user?.avatarUrl.isNotEmpty == true)
+                            ? NetworkImage(ApiConstants.resolveUrl(user!.avatarUrl))
                             : null,
                         onBackgroundImageError: (exception, stackTrace) {},
                         onForegroundImageError: (exception, stackTrace) {},
@@ -153,19 +154,69 @@ class StudentProfileScreen extends StatelessWidget {
                   const Divider(color: AppColors.surfaceBorder, height: 1),
                   const SizedBox(height: 16),
 
-                  // Academic Details Grid
+                  // Academic Details Grid with Real Semester & Admission Number
                   Row(
                     children: [
                       _buildIdDetail('ADMISSION NO.', user?.admissionNumber ?? 'N/A'),
-                      _buildIdDetail('ROLL NUMBER', user?.rollNumber ?? 'N/A'),
+                      _buildIdDetail('SEMESTER', (user?.semester.isNotEmpty == true) ? user!.semester : 'Sem III'),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       _buildIdDetail('BRANCH', user?.department ?? 'Engineering'),
-                      _buildIdDetail('YEAR & SEC', '${user?.year ?? '3rd'} (${user?.section ?? 'A'})'),
+                      _buildIdDetail('STATUS', '${user?.year ?? '2025'} • ${user?.section ?? 'Day Scholar'}'),
                     ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Official Physical ID Card Barcode Strip (Code 128)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.line_weight, size: 16, color: Colors.black87),
+                            const SizedBox(width: 8),
+                            Text(
+                              '*${user?.admissionNumber ?? "25116CN451"}*',
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontFamily: 'Courier',
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 3.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'BARCODE 128 • SEMESTER: ${(user?.semester.isNotEmpty == true) ? user!.semester : "Sem III"} • GL BAJAJ ITM',
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 16),
@@ -436,7 +487,7 @@ class StudentProfileScreen extends StatelessWidget {
                         if (extractedAvatarUrl != null)
                           CircleAvatar(
                             radius: 20,
-                            backgroundImage: NetworkImage('http://127.0.0.1:8000$extractedAvatarUrl'),
+                            backgroundImage: NetworkImage(ApiConstants.resolveUrl(extractedAvatarUrl!)),
                             backgroundColor: AppColors.caramel,
                           )
                         else
