@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "outputDirectory": "backend/flutter_web",
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Authorization" }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://club-connect-api.onrender.com/api/$1"
+    },
+    {
+      "source": "/static/(.*)",
+      "destination": "https://club-connect-api.onrender.com/static/$1"
+    },
+    {
+      "source": "/html5-qrcode.min.js",
+      "destination": "/html5-qrcode.min.js"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: club-connect
+    name: club-connect-api
     runtime: docker
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
