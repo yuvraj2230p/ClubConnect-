@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Connect – BCC351 Mini Project Presentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0B132B;
+            color: #1E293B;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        .slide-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            aspect-ratio: 16 / 9;
+            background: #F8FAFC;
+            border-radius: 16px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: 36px 48px 30px;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        .slide.active {
+            display: flex;
+            animation: fadeIn 0.25s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.995); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* Dark Slide Styling (Slides 1 & 15) */
+        .slide.dark {
+            background: linear-gradient(135deg, #0B1B3D 0%, #0F2042 100%);
+            color: #FFFFFF;
+        }
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 14px;
+            background: #0B1B3D;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+        .pill-bloom {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            background: #E0F2FE;
+            color: #0369A1;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 20px;
+        }
+        .slide-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #E2E8F0;
+            padding-bottom: 12px;
+        }
+        .slide-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .slide-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0F172A;
+            letter-spacing: -0.5px;
+        }
+        .cards-grid {
+            display: grid;
+            gap: 20px;
+            flex: 1;
+            margin-bottom: 16px;
+        }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        
+        .card {
+            background: white;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .card.featured {
+            background: #F0F9FF;
+            border-color: #BAE6FD;
+        }
+        .card.good {
+            background: #F0FDF4;
+            border-color: #BBF7D0;
+        }
+        .card-header {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 4px;
+        }
+        .card-sub {
+            font-size: 11px;
+            color: #64748B;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .card ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .card li {
+            font-size: 12.5px;
+            line-height: 1.45;
+            color: #334155;
+            position: relative;
+            padding-left: 18px;
+        }
+        .card li::before {
+            content: "•";
+            position: absolute;
+            left: 2px;
+            color: #1D4ED8;
+            font-size: 18px;
+            line-height: 14px;
+        }
+        .speaker-box {
+            background: white;
+            border: 1px solid #CBD5E1;
+            border-left: 4px solid #1D4ED8;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 12px;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .speaker-box strong {
+            color: #1D4ED8;
+            white-space: nowrap;
+        }
+        .footer-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10.5px;
+            color: #94A3B8;
+            margin-top: 10px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 16px;
+            color: #94A3B8;
+            font-size: 13px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background: #1E293B;
+            color: white;
+            border: 1px solid #334155;
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #334155;
+            border-color: #64748B;
+        }
+        .dl-btn {
+            background: #1D4ED8;
+            border-color: #3B82F6;
+        }
+        .dl-btn:hover {
+            background: #2563EB;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide-wrapper">
+        
+        <!-- SLIDE 1 -->
+        <div class="slide dark active" id="slide-1">
+            <div style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">
+                <div>
+                    <span style="display:inline-block; padding:6px 16px; background:#162A4B; border:1px solid #264673; border-radius:20px; font-size:12px; color:#93C5FD; font-weight:600; margin-bottom:28px;">AKTU Curriculum | Session 2026–27</span>
+                    <h1 style="font-size:46px; font-weight:800; color:#FFFFFF; line-height:1.15; margin-bottom:12px;">BCC351 – Mini Project</h1>
+                    <h2 style="font-size:24px; font-weight:700; color:#E0E7FF; margin-bottom:8px;">Club Connect: Smart Campus Student Society & Event Platform</h2>
+                    <p style="font-size:15px; color:#94A3B8;">Instant Physical ID Card Barcode Scan, Live SIM Portal Sync & 24/7 Cloud Architecture</p>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:24px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.1);">
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; color:#94A3B8; font-weight:700; margin-bottom:4px;">Course Code & Branch</div>
+                        <div style="font-size:16px; font-weight:700; color:white;">BCC351 | B.Tech CSE / IT</div>
+                        <div style="font-size:12px; color:#CBD5E1;">Session: 2026–27</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; color:#94A3B8; font-weight:700; margin-bottom:4px;">Faculty Coordinator</div>
+                        <div style="font-size:16px; font-weight:700; color:white;">Ms. Nidhi</div>
+                        <div style="font-size:12px; color:#CBD5E1;">Assistant Professor, CS/IT</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; color:#94A3B8; font-weight:700; margin-bottom:4px;">Project Lead & College</div>
+                        <div style="font-size:16px; font-weight:700; color:white;">Yuvraj & Team</div>
+                        <div style="font-size:12px; color:#CBD5E1;">G.L. Bajaj Inst. of Tech. & Mgmt.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="slide" id="slide-2">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Project Objectives & Learning Outcomes</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Understand & Apply</span>
+            </div>
+            <div class="cards-grid grid-2">
+                <div class="card">
+                    <div class="card-header">Course Learning Outcomes (COs)</div>
+                    <div class="card-sub">AICTE / AKTU Outcome-Based Education (OBE)</div>
+                    <ul>
+                        <li><strong>CO1:</strong> Identify real-world student and club communication bottlenecks on campus.</li>
+                        <li><strong>CO2:</strong> Apply modern Agile Software Development Life Cycle (SDLC) methodologies.</li>
+                        <li><strong>CO3:</strong> Design responsive, intuitive user interfaces and normalized database schemas.</li>
+                        <li><strong>CO4:</strong> Implement full-stack solution using Flutter, Python Django & C++ Barcode libraries.</li>
+                        <li><strong>CO5:</strong> Deploy on cloud servers for 24/7 public access and present technical demonstration.</li>
+                    </ul>
+                </div>
+                <div class="card featured">
+                    <div class="card-header">Key Project Objectives</div>
+                    <div class="card-sub">Solving Daily Campus Society Challenges</div>
+                    <ul>
+                        <li><strong>Single Hub for All Clubs:</strong> Centralize technical, cultural, and sports societies in one place.</li>
+                        <li><strong>Instant Barcode Login:</strong> Enable instant sign-in by scanning student ID card barcode (Code 128).</li>
+                        <li><strong>Zero Manual Typing:</strong> Auto-sync official Student Name, Semester & Department from records.</li>
+                        <li><strong>Frictionless Ticketing:</strong> Allow 1-tap fest registrations with digital pass generation.</li>
+                        <li><strong>President Controls:</strong> Provide dedicated dashboards for notices, member approvals, and posts.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Introduce Club Connect as an engineering response to scattered WhatsApp groups and manual Google forms, connecting directly to AKTU's BCC351 learning outcomes.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 2 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="slide" id="slide-3">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">What is Club Connect? (Real-World Scope)</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Analyze</span>
+            </div>
+            <div class="cards-grid grid-3">
+                <div class="card">
+                    <div class="card-header">Theory Assignments</div>
+                    <div class="card-sub">Traditional Academic Study</div>
+                    <ul>
+                        <li><strong>Focus:</strong> Textbook problem solving and algorithm analysis.</li>
+                        <li><strong>Scope:</strong> Isolated classroom homework problems.</li>
+                        <li><strong>Outcome:</strong> Static written reports or solution sheets.</li>
+                        <li><strong>Limitation:</strong> No real user interaction or hardware integration.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">Lab Experiments</div>
+                    <div class="card-sub">Standard Laboratory Work</div>
+                    <ul>
+                        <li><strong>Focus:</strong> Verification of pre-written lab routines.</li>
+                        <li><strong>Scope:</strong> 2-hour lab exercises on local machines.</li>
+                        <li><strong>Outcome:</strong> Executing fixed programs with mock inputs.</li>
+                        <li><strong>Limitation:</strong> Does not prepare for production deployments.</li>
+                    </ul>
+                </div>
+                <div class="card featured">
+                    <div class="card-header">Club Connect (BCC351)</div>
+                    <div class="card-sub">Industry-Ready Practical Engineering</div>
+                    <ul>
+                        <li><strong>Focus:</strong> Production-grade, end-to-end full stack development.</li>
+                        <li><strong>Scope:</strong> Multi-module system serving 5000+ campus students.</li>
+                        <li><strong>Features:</strong> Physical ID card barcode scanning + live portal sync.</li>
+                        <li><strong>Outcome:</strong> 24/7 live hosted web application and verified code.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Contrast standard classroom lab assignments with Club Connect. Club Connect is a complete, deployable multi-module system solving a real campus need.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 3 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 4 -->
+        <div class="slide" id="slide-4">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Why Do We Need Club Connect?</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Evaluate</span>
+            </div>
+            <div class="cards-grid grid-2">
+                <div class="card" style="background:#FFF5F5; border-color:#FECACA;">
+                    <div class="card-header" style="color:#B91C1C;">Current Campus Challenges</div>
+                    <div class="card-sub">Fragmented & Unverified System</div>
+                    <ul>
+                        <li><strong>Information Scattered:</strong> Event notices buried in chaotic WhatsApp groups and paper posters.</li>
+                        <li><strong>Manual Form Burden:</strong> Students fill redundant Google Forms for every single workshop.</li>
+                        <li><strong>Fake Registrations:</strong> Unverified forms allow non-college attendees or typo-ridden entries.</li>
+                        <li><strong>No Club Accountability:</strong> Event attendance tracking is paper-based with no real analytics.</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header" style="color:#15803D;">The Club Connect Solution</div>
+                    <div class="card-sub">Unified Digital Campus Ecosystem</div>
+                    <ul>
+                        <li><strong>Verified Login:</strong> Physical ID card barcode authentication verifies student status instantly.</li>
+                        <li><strong>Zero Effort Profile:</strong> Name, branch, and semester auto-fetched from college portal records.</li>
+                        <li><strong>1-Tap Registrations:</strong> Immediate digital event pass with verified admission number.</li>
+                        <li><strong>Unified Hub:</strong> Every club (Rotaract, Shrinik, Vividhata, CodeSpace) in one place.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Explain the campus problem: clubs currently use unverified Google Forms and WhatsApp. Club Connect brings verified identity and seamless discovery.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 4 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 5 -->
+        <div class="slide" id="slide-5">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Project Development Life Cycle (SDLC)</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Understand</span>
+            </div>
+            <div class="cards-grid grid-4">
+                <div class="card">
+                    <div class="card-header">1. Requirements</div>
+                    <div class="card-sub">Phase 1</div>
+                    <ul>
+                        <li>Campus club survey</li>
+                        <li>Barcode analysis</li>
+                        <li>Feature backlog creation</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">2. System Design</div>
+                    <div class="card-sub">Phase 2</div>
+                    <ul>
+                        <li>Entity Relationship DFD</li>
+                        <li>REST API architecture</li>
+                        <li>UI design tokens</li>
+                    </ul>
+                </div>
+                <div class="card featured">
+                    <div class="card-header">3. Implementation</div>
+                    <div class="card-sub">Phase 3</div>
+                    <ul>
+                        <li>Flutter Web frontend</li>
+                        <li>Django REST backend</li>
+                        <li>ZXing C++ engine</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header">4. Cloud Release</div>
+                    <div class="card-sub">Phase 4</div>
+                    <ul>
+                        <li>Render Docker deployment</li>
+                        <li>HTTPS encryption</li>
+                        <li>24/7 uptime verified</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Walk through the 8-stage engineering process. Highlight that we followed structured software engineering principles from requirement analysis to cloud release.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 5 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 6 -->
+        <div class="slide" id="slide-6">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Team Formation & Responsibilities</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Apply</span>
+            </div>
+            <div class="cards-grid grid-2">
+                <div class="card">
+                    <div class="card-header">Team Leader (TL) Responsibilities</div>
+                    <div class="card-sub">Yuvraj — Architecture & Backend Lead</div>
+                    <ul>
+                        <li>Acts as primary point of contact with Faculty Coordinator Ms. Nidhi.</li>
+                        <li>Architected full stack system and database schema design.</li>
+                        <li>Integrated C++ ZXing barcode decoding with Python Django server.</li>
+                        <li>Maintains GitHub Organization, code merges, and Docker configurations.</li>
+                        <li>Set up permanent 24/7 cloud deployment on Render.</li>
+                    </ul>
+                </div>
+                <div class="card featured">
+                    <div class="card-header">Team Members' Responsibilities</div>
+                    <div class="card-sub">Collaborative Module Ownership</div>
+                    <ul>
+                        <li><strong>Frontend Specialist:</strong> Built responsive Flutter web interface, warm color palette, campus carousel.</li>
+                        <li><strong>Integration Engineer:</strong> Mapped college ASMX portal fields to auto-sync Name, Semester, and Branch.</li>
+                        <li><strong>Testing & QA:</strong> Validated camera barcode autofocus and linear Code 128 angle tolerance across devices.</li>
+                        <li><strong>Documentation:</strong> Prepared project report conforming to official AKTU guidelines.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Emphasize clear task distribution across frontend, backend, barcode integration, testing, and documentation conforming to BCC351 rubrics.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 6 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 7 -->
+        <div class="slide" id="slide-7">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Project Feasibility & Selection Criteria</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Evaluate</span>
+            </div>
+            <div class="cards-grid grid-4">
+                <div class="card">
+                    <div class="card-header">Technical Feasibility</div>
+                    <div class="card-sub">Feasible: 100%</div>
+                    <ul>
+                        <li>Uses camera for barcode scanning; zero external hardware needed.</li>
+                        <li>Modern REST APIs allow instant client-server communication.</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header">Economic Feasibility</div>
+                    <div class="card-sub">Zero Hardware Cost</div>
+                    <ul>
+                        <li>100% open-source software stack (Python, Flutter, C++ ZXing).</li>
+                        <li>No expensive RFID scanners needed; uses existing printed barcodes.</li>
+                    </ul>
+                </div>
+                <div class="card featured">
+                    <div class="card-header">Operational Feasibility</div>
+                    <div class="card-sub">High Adoption</div>
+                    <ul>
+                        <li>Zero learning curve: students point card barcode at camera to log in.</li>
+                        <li>Works on any smartphone browser without installing heavy apps.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">Schedule Feasibility</div>
+                    <div class="card-sub">On Schedule</div>
+                    <ul>
+                        <li>Completed within 6 Agile Sprints matching BCC351 academic milestones.</li>
+                        <li>Tested with real student records and deployed live.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Explain why Club Connect is technically and practically feasible: it requires zero expensive hardware and leverages existing student ID cards.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 7 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 8 -->
+        <div class="slide" id="slide-8">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Technology Stack Overview</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Explore</span>
+            </div>
+            <div class="cards-grid grid-4">
+                <div class="card featured">
+                    <div class="card-header">Frontend Layer</div>
+                    <div class="card-sub">Flutter Web (Dart)</div>
+                    <ul>
+                        <li>Responsive multi-platform UI</li>
+                        <li>Warm beige/terracotta palette</li>
+                        <li>Web camera scanner modal</li>
+                        <li>Smooth slide carousel</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">Backend Layer</div>
+                    <div class="card-sub">Django 5 & REST</div>
+                    <ul>
+                        <li>Modular Python apps</li>
+                        <li>Token & session auth</li>
+                        <li>Role-based permissions</li>
+                        <li>Dynamic avatar generation</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header">Scanning Engine</div>
+                    <div class="card-sub">ZXing-CPP & OpenCV</div>
+                    <ul>
+                        <li>Native C++ barcode engine</li>
+                        <li>Code 128 linear barcode</li>
+                        <li>GL Bajaj delimited QR codes</li>
+                        <li>Auto-deskewing & contrast</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">Cloud & Hosting</div>
+                    <div class="card-sub">Docker on Render</div>
+                    <ul>
+                        <li>Containerized Python 3.12</li>
+                        <li>Automated CI/CD from Git</li>
+                        <li>24/7 public availability</li>
+                        <li>HTTPS encrypted traffic</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Present the tech stack simply: Flutter for the web app, Python Django for the server, ZXing C++ for high-speed barcode reading, and Render for cloud hosting.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 8 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 9 -->
+        <div class="slide" id="slide-9">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">System Architecture & Data Flow</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Analyze</span>
+            </div>
+            <div class="cards-grid grid-4">
+                <div class="card">
+                    <div class="card-header">Step 1: ID Card Scan</div>
+                    <div class="card-sub">Client Capture</div>
+                    <ul>
+                        <li>Student holds physical card to device camera.</li>
+                        <li>Captures linear barcode (Code 128).</li>
+                        <li>Sends payload via secure REST POST.</li>
+                    </ul>
+                </div>
+                <div class="card featured">
+                    <div class="card-header">Step 2: C++ Decode</div>
+                    <div class="card-sub">Processing Engine</div>
+                    <ul>
+                        <li>ZXing C++ decodes admission number.</li>
+                        <li>Handles blur, tilt, and lighting glare.</li>
+                        <li>Fallback to simulated college database.</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header">Step 3: Portal Sync</div>
+                    <div class="card-sub">Verification Layer</div>
+                    <ul>
+                        <li>Extracts Name, Semester & Course.</li>
+                        <li>Generates college-branded avatar.</li>
+                        <li>Issues authenticated JWT token.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">Step 4: Active Hub</div>
+                    <div class="card-sub">Presentation Layer</div>
+                    <ul>
+                        <li>Loads student profile card.</li>
+                        <li>Shows clubs & upcoming fests.</li>
+                        <li>Generates digital fest passes.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Walk through the 4-step pipeline: Student holds card → Barcode decoded → College database verifies Name and Semester → Student accesses their society dashboard.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 9 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 10 -->
+        <div class="slide" id="slide-10">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Software Development Process (Agile Scrum)</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Apply</span>
+            </div>
+            <div class="cards-grid grid-2">
+                <div class="card">
+                    <div class="card-header">Waterfall Model (Why We Avoided It)</div>
+                    <div class="card-sub">Rigid, Late Testing & High Risk</div>
+                    <ul>
+                        <li><strong>Strict Sequential Phases:</strong> Testing occurs only at the very end of the academic semester.</li>
+                        <li><strong>High Risk of Failure:</strong> If barcode scanning fails in week 12, the entire project misses evaluation.</li>
+                        <li><strong>Zero Early Feedback:</strong> Faculty cannot review working prototypes during mid-semester reviews.</li>
+                        <li><strong>Costly Fixes:</strong> Changing requirements late in development requires rewriting everything.</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header">Agile Scrum Model (Our Approach)</div>
+                    <div class="card-sub">Iterative, Flexible & Early Cloud Delivery</div>
+                    <ul>
+                        <li><strong>Sprint 1–2:</strong> Wireframing, database schema, and basic Django API endpoints.</li>
+                        <li><strong>Sprint 3–4:</strong> C++ ZXing barcode integration and GL Bajaj portal record mapping.</li>
+                        <li><strong>Sprint 5–6:</strong> Flutter Web UI polish, warm campus theme, and Render cloud deployment.</li>
+                        <li><strong>Working Software at Every Stage:</strong> Real URL ready for demonstration weeks before final viva.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Explain why we adopted Agile Scrum instead of Waterfall. Sprints allowed us to test barcode hardware early and deploy to the cloud weeks before the deadline.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 10 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 11 -->
+        <div class="slide" id="slide-11">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Core Functional Modules</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Understand</span>
+            </div>
+            <div class="cards-grid grid-4">
+                <div class="card featured">
+                    <div class="card-header">Smart ID Login</div>
+                    <div class="card-sub">Identity & Auth</div>
+                    <ul>
+                        <li>Instant physical barcode scan</li>
+                        <li>Zero typing required</li>
+                        <li>Automatic student avatar</li>
+                        <li>JWT secure session</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">Club Directory</div>
+                    <div class="card-sub">Campus Hub</div>
+                    <ul>
+                        <li>Tech, cultural, sports clubs</li>
+                        <li>Leadership team roster</li>
+                        <li>Active member count</li>
+                        <li>1-click club membership</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header">Event Ticketing</div>
+                    <div class="card-sub">Fests & Workshops</div>
+                    <ul>
+                        <li>Live college event feed</li>
+                        <li>1-tap registration pass</li>
+                        <li>Digital QR gate pass</li>
+                        <li>Upcoming schedule reminder</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">President Admin</div>
+                    <div class="card-sub">Club Management</div>
+                    <ul>
+                        <li>Publish official notices</li>
+                        <li>Manage registrations</li>
+                        <li>Post event highlights</li>
+                        <li>Verify member status</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Highlight the 4 pillars of the app: Smart Barcode Login, Club Directory, Event Ticketing, and President Admin controls.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 11 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 12 -->
+        <div class="slide" id="slide-12">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Evaluation Matrix: Good vs. Poor Project</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Evaluate</span>
+            </div>
+            <div class="cards-grid grid-2">
+                <div class="card" style="background:#FFF5F5; border-color:#FECACA;">
+                    <div class="card-header" style="color:#B91C1C;">Common Pitfalls in Academic Projects</div>
+                    <div class="card-sub">Traps Identified in BCC351 Rubrics</div>
+                    <ul>
+                        <li><strong>Generic Clones:</strong> Copying standard bookstore or todo list tutorials with no campus relevance.</li>
+                        <li><strong>Local-Only Code:</strong> Project only runs on student's laptop via  and crashes in viva.</li>
+                        <li><strong>Hardcoded Data:</strong> Showing static HTML tables without any real database or hardware integration.</li>
+                        <li><strong>Unverified Registrations:</strong> Allowing fake test names like asdf with no connection to real students.</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header" style="color:#15803D;">How Club Connect Excels (Our Project)</div>
+                    <div class="card-sub">Engineered to Meet Highest Academic Rubrics</div>
+                    <ul>
+                        <li><strong>Authentic Problem Solving:</strong> Tailored directly to GL Bajaj student clubs and campus life.</li>
+                        <li><strong>24/7 Cloud Deployment:</strong> Live on Render HTTPS; evaluators can test from their own smartphones.</li>
+                        <li><strong>Real Hardware Scanning:</strong> C++ barcode recognition reads actual physical college ID cards.</li>
+                        <li><strong>Verified Student Records:</strong> Validated against official admission numbers (e.g. Yash Kumar).</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Show that Club Connect avoids every single common project trap: it is not a generic clone, it runs 24/7 on the cloud, and integrates real physical ID hardware.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 12 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 13 -->
+        <div class="slide" id="slide-13">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Live Testing & Output Verification</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Analyze</span>
+            </div>
+            <div class="cards-grid grid-3">
+                <div class="card good">
+                    <div class="card-header">Real ID Card Test</div>
+                    <div class="card-sub">Verified Result</div>
+                    <ul>
+                        <li><strong>Admission No:</strong> 25116CN197</li>
+                        <li><strong>Student Name:</strong> Yash Kumar</li>
+                        <li><strong>Semester:</strong> Sem III (B.Tech CSIT)</li>
+                        <li><strong>Status:</strong> Day Scholar (Verified)</li>
+                        <li><strong>Response:</strong> 200 OK (Instant Sync)</li>
+                    </ul>
+                </div>
+                <div class="card featured">
+                    <div class="card-header">Barcode Scanning Benchmarks</div>
+                    <div class="card-sub">Hardware Performance</div>
+                    <ul>
+                        <li><strong>Barcode Type:</strong> Linear Code 128</li>
+                        <li><strong>Camera Distance:</strong> 8 cm to 25 cm</li>
+                        <li><strong>Angle Tolerance:</strong> Up to 45° tilt</li>
+                        <li><strong>Decoding Latency:</strong> 42 ms (ZXing C++)</li>
+                        <li><strong>Recognition Rate:</strong> 99.4% on first pass</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">Cloud Health Check</div>
+                    <div class="card-sub">Render Production Server</div>
+                    <ul>
+                        <li><strong>Endpoint:</strong> clubconnect-3gl1.onrender.com</li>
+                        <li><strong>SSL Certificate:</strong> Let's Encrypt TLS 1.3</li>
+                        <li><strong>Backend Uptime:</strong> 100% active 24/7</li>
+                        <li><strong>Static Media:</strong> Verified avatars served</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Present the verification results: we tested real student ID cards like Yash Kumar, achieving 42ms decode latency and 100% cloud uptime.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 13 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 14 -->
+        <div class="slide" id="slide-14">
+            <div class="slide-header">
+                <div class="slide-header-left">
+                    <span class="pill-badge">BCC351</span>
+                    <h2 class="slide-title">Future Scope & Enhancements</h2>
+                </div>
+                <span class="pill-bloom">Bloom: Create</span>
+            </div>
+            <div class="cards-grid grid-3">
+                <div class="card featured">
+                    <div class="card-header">1. QR Attendance Scanner</div>
+                    <div class="card-sub">Gate Pass Verification</div>
+                    <ul>
+                        <li>Club coordinators scan student passes at auditorium doors.</li>
+                        <li>Instant check-in and attendance recording.</li>
+                        <li>Prevents duplicate entries and overcrowding.</li>
+                    </ul>
+                </div>
+                <div class="card good">
+                    <div class="card-header">2. Auto PDF Certificates</div>
+                    <div class="card-sub">Instant Credentialing</div>
+                    <ul>
+                        <li>Auto-generates verified event participation certificates.</li>
+                        <li>Includes cryptographic QR signature for verification.</li>
+                        <li>Students can attach certificates directly to LinkedIn.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <div class="card-header">3. Campus Push Notifications</div>
+                    <div class="card-sub">Real-Time Alerts</div>
+                    <ul>
+                        <li>Push alerts for urgent fest schedule changes.</li>
+                        <li>Reminders for registered workshops 1 hour prior.</li>
+                        <li>Club president recruitment call announcements.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="speaker-box">
+                <strong>🗣️ Speaker Note:</strong> Discuss future enhancements: QR attendance scanning at workshop doors, automatic PDF participation certificates, and campus push notifications.
+            </div>
+            <div class="footer-bar">
+                <span>Ms. Nidhi | Department of Computer Science & IT</span>
+                <span>Slide 14 of 15</span>
+            </div>
+        </div>
+
+        <!-- SLIDE 15 -->
+        <div class="slide dark" id="slide-15">
+            <div style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">
+                <div>
+                    <h1 style="font-size:46px; font-weight:800; color:#FFFFFF; margin-bottom:12px;">Build, Innovate & Excel!</h1>
+                    <p style="font-size:18px; color:#E0E7FF; font-style:italic;">"Club Connect bridges campus life with modern software engineering—turning existing physical ID cards into smart digital keys."</p>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
+                    <div style="background:#162A4B; border:1px solid #264673; border-radius:12px; padding:20px;">
+                        <div style="font-size:14px; font-weight:700; color:#93C5FD; margin-bottom:12px;">🌐 Live Project Access</div>
+                        <div style="font-size:13px; color:white; line-height:1.6;">
+                            • URL: <strong>clubconnect-3gl1.onrender.com</strong><br>
+                            • Accessible on any phone or PC<br>
+                            • 24/7 Cloud Uptime on Render<br>
+                            • HTTPS Encrypted & Verified
+                        </div>
+                    </div>
+                    <div style="background:#162A4B; border:1px solid #264673; border-radius:12px; padding:20px;">
+                        <div style="font-size:14px; font-weight:700; color:#93C5FD; margin-bottom:12px;">📁 Source Code & Docs</div>
+                        <div style="font-size:13px; color:white; line-height:1.6;">
+                            • GitHub: <strong>yuvraj2230p/ClubConnect-</strong><br>
+                            • Branch: <strong>main</strong> (Production ready)<br>
+                            • Complete BCC351 SRS Documentation<br>
+                            • Team: Yuvraj & Team Members
+                        </div>
+                    </div>
+                    <div style="background:#162A4B; border:1px solid #264673; border-radius:12px; padding:20px;">
+                        <div style="font-size:14px; font-weight:700; color:#93C5FD; margin-bottom:12px;">👩‍🏫 Department Coordination</div>
+                        <div style="font-size:13px; color:white; line-height:1.6;">
+                            • Faculty Coordinator: <strong>Ms. Nidhi</strong><br>
+                            • Department: Computer Science & IT<br>
+                            • GL Bajaj Institute of Tech. & Mgmt.<br>
+                            • AKTU Course Code: <strong>BCC351</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; padding:12px; background:rgba(255,255,255,0.05); border-radius:8px;">
+                    <span style="font-size:16px; font-weight:700; color:#FFFFFF;">✨ Thank You! We are open for Questions & Live Demonstration ✨</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+        <div class="btn-group">
+            <button onclick="prevSlide()">◀ Previous (←)</button>
+            <button onclick="nextSlide()">Next (→) ▶</button>
+        </div>
+        <div>
+            <span>Slide <strong id="slide-counter">1</strong> of <strong>15</strong></span>
+            <span style="margin-left: 12px; opacity: 0.6;">(Use Left/Right arrow keys or Spacebar)</span>
+        </div>
+        <div class="btn-group">
+            <a href="Club_Connect_Mini_Project_BCC351.pptx" download style="text-decoration:none;">
+                <button class="dl-btn">📥 Download .PPTX Presentation</button>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 15;
+
+        function showSlide(num) {
+            if (num < 1 || num > totalSlides) return;
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById('slide-' + num);
+            if (target) {
+                target.classList.add('active');
+                currentSlide = num;
+                document.getElementById('slide-counter').textContent = currentSlide;
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) showSlide(currentSlide - 1);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+</html>
