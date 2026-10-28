@@ -210,6 +210,9 @@ def create_presentation():
     add_meta_col(Inches(4.8), "Faculty Coordinator", "Ms. Nidhi", "Assistant Professor, CS/IT")
     add_meta_col(Inches(8.8), "Project Lead & College", "Yuvraj & Team", "G.L. Bajaj Institute of Tech. & Mgmt.")
 
+    # Speaker note for Slide 1
+    s1.notes_slide.notes_text_frame.text = "Good morning respected faculty. Today our team is presenting our BCC351 Mini Project titled 'Club Connect'. It is an all-in-one digital hub for all student clubs and events in our college, featuring an instant physical ID card barcode scanner for login."
+
     # ==========================================
     # SLIDE 2: Objectives & Outcomes
     # ==========================================
@@ -505,7 +508,7 @@ def create_presentation():
                  "Generates digital fest entry passes with QR codes.",
                  "Gives club presidents administrative controls."
              ], "Presentation Layer")
-    add_speaker_note(s9, "Walk through the 4-step pipeline: Student holds card $\rightarrow$ Barcode decoded $\rightarrow$ College database verifies Name and Semester $\rightarrow$ Student accesses their society dashboard.")
+    add_speaker_note(s9, "Walk through the 4-step pipeline: Student holds card -> Barcode decoded -> College database verifies Name and Semester -> Student accesses their society dashboard.")
 
     # ==========================================
     # SLIDE 10: Software Development Process (Agile)
